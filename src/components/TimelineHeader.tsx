@@ -56,7 +56,7 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-xl overflow-hidden transition-all">
+    <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-xl overflow-hidden transition-all">
       {/* Background glow */}
       <div className="absolute -right-10 -top-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -left-10 -bottom-10 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />

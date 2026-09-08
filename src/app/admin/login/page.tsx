@@ -12,6 +12,24 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    const checkExistingAdminAuth = async () => {
+      try {
+        const res = await apiClient('/api/admin/check-auth');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user?.role === 'ADMIN') {
+            router.replace('/admin');
+          }
+        }
+      } catch (e) {
+        // Not authenticated as admin, remain on login form
+      }
+    };
+
+    checkExistingAdminAuth();
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

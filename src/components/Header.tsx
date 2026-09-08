@@ -7,7 +7,10 @@ import {
   Plus, 
   Search, 
   Target,
-  ShieldCheck
+  ShieldCheck,
+  User,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -17,6 +20,9 @@ interface HeaderProps {
   onOpenAddQuestion: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  currentUser: { id: string; username: string; role: string } | null;
+  onOpenAuthModal: () => void;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,6 +32,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAddQuestion,
   searchQuery,
   onSearchChange,
+  currentUser,
+  onOpenAuthModal,
+  onLogout,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -98,6 +107,36 @@ export const Header: React.FC<HeaderProps> = ({
               <Plus className="w-4 h-4" />
               <span>Submit Question</span>
             </button>
+
+            {/* User Auth / Profile */}
+            {currentUser ? (
+              <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs">
+                <div className="flex items-center gap-1.5 font-semibold text-slate-200">
+                  <User className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>{currentUser.username}</span>
+                  {currentUser.role === 'ADMIN' && (
+                    <span className="px-1.5 py-0.2 text-[10px] bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
+                      ADMIN
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-700 rounded transition-colors ml-1"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={onOpenAuthModal}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 rounded-lg transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In / Register</span>
+              </button>
+            )}
 
             {/* Admin Portal Link */}
             <a

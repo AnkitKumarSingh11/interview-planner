@@ -69,13 +69,28 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   const completedQuestions = allQuestions.filter((q) => q.completed).length;
   const percentage = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
 
+  const handleHeaderClick = () => {
+    const nextState = !isExpanded;
+    setIsExpanded(nextState);
+    if (nextState) {
+      setTimeout(() => {
+        const el = document.getElementById(section.id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
   return (
-    <div className="scroll-mt-28 bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-lg transition-all hover:border-slate-700/80">
+    <div id={section.id} className="scroll-mt-28 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg transition-all hover:border-slate-700/80">
       
       {/* Section Header - Whole Header Clickable */}
       <div 
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/60 border-b border-slate-800/80 cursor-pointer select-none hover:bg-slate-800/50 transition-colors"
+        onClick={handleHeaderClick}
+        className={`sticky top-0 z-20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/95 backdrop-blur-md cursor-pointer select-none hover:bg-slate-800/80 transition-colors shadow-sm ${
+          isExpanded ? 'rounded-t-2xl' : 'rounded-2xl'
+        }`}
       >
         
         {/* Left Title & Timeline */}
@@ -113,7 +128,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         </div>
 
         {/* Right Stats & Submit Question Button */}
-        <div className="flex items-center gap-4 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800">
+        <div className="flex items-center gap-4 shrink-0 justify-between sm:justify-end border-slate-800">
           
           {/* Progress Indicator */}
           <div className="flex items-center gap-3">
@@ -150,7 +165,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
 
       {/* Subsections & Questions Body */}
       {isExpanded && (
-        <div className="p-4 sm:p-5 space-y-4 bg-slate-950/40">
+        <div className="p-4 sm:p-5 space-y-4 bg-slate-950/40 rounded-b-2xl">
           {section.subsections.length === 0 ? (
             <div className="text-center py-6 text-slate-500 text-xs">
               No questions under this topic yet. Click "+ Submit Question" to submit one!
@@ -199,7 +214,6 @@ export const SectionCard: React.FC<SectionCardProps> = ({
                           key={question.id}
                           question={question}
                           onToggleComplete={onToggleQuestion}
-                          onDeleteQuestion={() => {}} // No-op on public page
                           onUpdateQuestion={onUpdateQuestion}
                         />
                       ))}

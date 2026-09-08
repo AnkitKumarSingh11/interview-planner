@@ -12,7 +12,7 @@ import {
 interface QuestionRowProps {
   question: Question;
   onToggleComplete: (questionId: string) => void;
-  onDeleteQuestion: (questionId: string) => void;
+  onDeleteQuestion?: (questionId: string) => void;
   onUpdateQuestion: (questionId: string, updates: Partial<Question>) => void;
 }
 
@@ -132,17 +132,19 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
           <FileText className="w-4 h-4" />
         </button>
 
-        {/* Delete Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDeleteQuestion(question.id);
-          }}
-          title="Delete Question"
-          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        {/* Delete Button - Only shown when onDeleteQuestion callback is explicitly provided */}
+        {onDeleteQuestion && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteQuestion(question.id);
+            }}
+            title="Delete Question"
+            className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Notes Modal */}

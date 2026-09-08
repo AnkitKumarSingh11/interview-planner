@@ -17,7 +17,8 @@ import {
   Clock, 
   FolderKanban, 
   BookOpen, 
-  Layers 
+  Layers,
+  Loader2
 } from 'lucide-react';
 import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { AddSectionModal } from '@/components/AddSectionModal';
@@ -45,12 +46,32 @@ export default function AdminDashboardPage() {
     return 'pending';
   });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isDataLoading, setIsDataLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const fetchPendingQuestions = async () => {
+    setIsDataLoading(true);
+    try {
+      const pendingRes = await apiClient('/api/admin/pending');
+      if (pendingRes.status === 401 || pendingRes.status === 403) {
+        router.replace('/admin/login');
+        return;
+      }
+      const pendingData = await pendingRes.json();
+      if (Array.isArray(pendingData)) setPendingQuestions(pendingData);
+    } catch (e) {
+      console.error('Failed to load pending questions:', e);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
 
   const handleTrackChange = (id: string) => {
     setActiveTrackId(id);
     try {
       localStorage.setItem('planly_admin_active_track_id', id);
     } catch (e) {}
+    fetchTrackSections(id);
   };
 
   const handleTabChange = (tab: 'pending' | 'syllabus') => {
@@ -58,6 +79,16 @@ export default function AdminDashboardPage() {
     try {
       localStorage.setItem('planly_admin_active_tab', tab);
     } catch (e) {}
+
+    if (tab === 'pending') {
+      fetchPendingQuestions();
+    } else if (tab === 'syllabus') {
+      if (activeTrackId) {
+        fetchTrackSections(activeTrackId);
+      } else {
+        fetchAdminData();
+      }
+    }
   };
 
   // Confirm Modal state
@@ -78,7 +109,7 @@ export default function AdminDashboardPage() {
   const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
   const [isAddTrackOpen, setIsAddTrackOpen] = useState(false);
 
-  // 1. Strict Authentication Guard
+  // 1. Strict Authentication Guard & State Persistence
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -86,7 +117,19 @@ export default function AdminDashboardPage() {
         const data = await res.json();
         if (data.authenticated) {
           setIsAuthenticated(true);
-          fetchAdminData();
+          let savedTrack = 'dsa';
+          if (typeof window !== 'undefined') {
+            const st = localStorage.getItem('planly_admin_active_tab') as 'pending' | 'syllabus';
+            if (st === 'pending' || st === 'syllabus') {
+              setActiveTab(st);
+            }
+            const strk = localStorage.getItem('planly_admin_active_track_id');
+            if (strk) {
+              savedTrack = strk;
+              setActiveTrackId(strk);
+            }
+          }
+          fetchAdminData(savedTrack);
         } else {
           setIsAuthenticated(false);
           router.replace('/admin/login');
@@ -100,7 +143,8 @@ export default function AdminDashboardPage() {
     checkAuth();
   }, []);
 
-  const fetchAdminData = async () => {
+  const fetchAdminData = async (overrideTrackId?: string) => {
+    setIsDataLoading(true);
     try {
       const pendingRes = await apiClient('/api/admin/pending');
       if (pendingRes.status === 401 || pendingRes.status === 403) {
@@ -114,17 +158,21 @@ export default function AdminDashboardPage() {
       const tracksData = await tracksRes.json();
       if (Array.isArray(tracksData) && tracksData.length > 0) {
         setTracks(tracksData);
-        const targetId = activeTrackId && tracksData.some(t => t.id === activeTrackId) ? activeTrackId : tracksData[0].id;
+        const preferredId = overrideTrackId || activeTrackId;
+        const targetId = preferredId && tracksData.some(t => t.id === preferredId) ? preferredId : tracksData[0].id;
         setActiveTrackId(targetId);
-        fetchTrackSections(targetId);
+        await fetchTrackSections(targetId);
       }
     } catch (e) {
       console.error('Failed to load admin data:', e);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
   const fetchTrackSections = async (trackId: string) => {
     if (!trackId) return;
+    setIsDataLoading(true);
     try {
       const res = await apiClient(`/api/tracks/${trackId}/sections`);
       const sectionsData = await res.json();
@@ -135,6 +183,8 @@ export default function AdminDashboardPage() {
       }
     } catch (e) {
       console.error(`Failed to load sections for track ${trackId}:`, e);
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -156,6 +206,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleApprove = async (questionId: string) => {
+    setActionLoadingId(questionId);
     try {
       const res = await apiClient('/api/admin/approve', {
         method: 'POST',
@@ -164,14 +215,17 @@ export default function AdminDashboardPage() {
       });
       if (res.ok) {
         showToast('Question approved & published live!', 'success');
-        fetchAdminData();
+        await fetchAdminData();
       }
     } catch (e) {
       console.error('Failed to approve question:', e);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const handleReject = async (questionId: string) => {
+    setActionLoadingId(questionId);
     try {
       const res = await apiClient('/api/admin/approve', {
         method: 'POST',
@@ -180,10 +234,12 @@ export default function AdminDashboardPage() {
       });
       if (res.ok) {
         showToast('Question submission rejected.', 'info');
-        fetchAdminData();
+        await fetchAdminData();
       }
     } catch (e) {
       console.error('Failed to reject question:', e);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -238,6 +294,29 @@ export default function AdminDashboardPage() {
           fetchAdminData();
         } catch (e) {
           console.error('Failed to delete subsection:', e);
+        }
+      },
+    });
+  };
+
+  const handleDeleteQuestion = (questionId: string, title: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: `Delete Question "${title}"?`,
+      message: `Are you sure you want to delete the question "${title}"? This action cannot be undone.`,
+      onConfirm: async () => {
+        try {
+          const res = await apiClient('/api/questions/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionId }),
+          });
+          if (res.ok) {
+            showToast(`Question "${title}" deleted successfully.`, 'info');
+            fetchAdminData();
+          }
+        } catch (e) {
+          console.error('Failed to delete question:', e);
         }
       },
     });
@@ -423,7 +502,12 @@ export default function AdminDashboardPage() {
               </span>
             </div>
 
-            {pendingQuestions.length === 0 ? (
+            {isDataLoading ? (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+                <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
+                <p className="text-sm font-medium text-slate-400">Loading pending questions...</p>
+              </div>
+            ) : pendingQuestions.length === 0 ? (
               <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
                 <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
                 <h3 className="text-base font-bold text-slate-300">All caught up!</h3>
@@ -494,17 +578,27 @@ export default function AdminDashboardPage() {
                     <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
                       <button
                         onClick={() => handleReject(q.id)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all"
+                        disabled={actionLoadingId === q.id}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all disabled:opacity-50"
                       >
-                        <XCircle className="w-4 h-4" />
+                        {actionLoadingId === q.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+                        ) : (
+                          <XCircle className="w-4 h-4" />
+                        )}
                         Reject Submission
                       </button>
 
                       <button
                         onClick={() => handleApprove(q.id)}
-                        className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md transition-all"
+                        disabled={actionLoadingId === q.id}
+                        className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md transition-all disabled:opacity-50"
                       >
-                        <CheckCircle2 className="w-4 h-4" />
+                        {actionLoadingId === q.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4" />
+                        )}
                         Approve & Publish Live
                       </button>
                     </div>
@@ -568,9 +662,14 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* List of Topic Sections with Admin Management Controls */}
-            {activeTrack && (
+            {isDataLoading && (!activeTrack || !(activeTrack.sections && activeTrack.sections.length > 0)) ? (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mx-auto" />
+                <p className="text-sm font-medium text-slate-400">Loading syllabus topics...</p>
+              </div>
+            ) : activeTrack && (
               <div className="space-y-4">
-                {activeTrack.sections.map((sec) => (
+                {(activeTrack.sections || []).map((sec) => (
                   <div
                     key={sec.id}
                     className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-lg"
@@ -582,7 +681,7 @@ export default function AdminDashboardPage() {
                           <h3 className="text-lg font-bold text-white">{sec.topic}</h3>
                         </div>
                         <div className="text-xs text-slate-400 flex items-center gap-2">
-                          <span>{sec.subsections.length} Sub-sections</span>
+                          <span>{sec.subsections?.length || 0} Sub-sections</span>
                         </div>
                       </div>
 
@@ -599,12 +698,12 @@ export default function AdminDashboardPage() {
 
                     {/* Sub-sections & Questions list */}
                     <div className="space-y-3 pt-1">
-                      {sec.subsections.map((sub) => (
+                      {(sec.subsections || []).map((sub) => (
                         <div key={sub.id} className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
                           <div className="flex items-center justify-between">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
                               <Layers className="w-3.5 h-3.5" />
-                              {sub.title} ({sub.questions.length} questions)
+                              {sub.title} ({sub.questions?.length || 0} questions)
                             </h4>
                             <button
                               onClick={() => handleDeleteSubsection(sub.id, sub.title)}
@@ -639,11 +738,19 @@ export default function AdminDashboardPage() {
                                       href={q.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-slate-400 hover:text-indigo-400"
+                                      className="text-slate-400 hover:text-indigo-400 p-1"
+                                      title="Open problem link"
                                     >
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
                                   )}
+                                  <button
+                                    onClick={() => handleDeleteQuestion(q.id, q.title)}
+                                    className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                                    title="Delete Question"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </div>
                             ))}

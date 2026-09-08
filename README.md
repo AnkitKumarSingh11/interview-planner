@@ -2,30 +2,33 @@
 
 **Planly** is a modern, high-performance web application designed to help software engineers plan, track, and master their interview preparation across **Data Structures & Algorithms (DSA)**, **Low Level Design (LLD)**, and custom technical domains.
 
-Built with **Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, and **SQLite**.
+Built with **Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, and an express backend integration with **MongoDB**.
 
 ---
 
 ## 🌟 Key Features
 
-### 1. Pre-loaded Complete Syllabi
+### 1. Pre-loaded Complete Syllabi & Dynamic Roadmap Tracks
 * **DSA Track**: 59 topic sections with **315+ curated questions** covering Arrays, Hashing, Binary Search, Recursion, Linked Lists, Greedy Algorithms, Sliding Window/2-Pointer, Stack/Queues, Binary Trees, BSTs, Heaps, Graphs, and Dynamic Programming.
 * **LLD Track**: 13 topic sections with **70+ design topics & machine coding problems** covering SOLID Principles, UML, Creational/Structural/Behavioural Design Patterns, Multithreading, Dependency Injection, and real-world system designs (Parking Lot, Vending Machine, ATM, PubSub, Elevator, Digital Wallet, etc.).
+* **Custom Tracks**: Admin can dynamically add and manage custom roadmap tracks.
 
-### 2. Timeline Planning & Target Duration Selector
-* Set custom roadmap targets (**30 Days**, **60 Days**, **90 Days**, **120 Days**, **160 Days**, or Custom Start Date & Duration).
-* **Document Complexity-Based Auto-Scaling**: Timeline dates automatically scale proportionally across all main topics based on their exact complexity weights from official reference timetables.
+### 2. Secure Token Management & Silent Refresh
+* **In-Memory & Cross-Tab Token Sharing**: Auth tokens are kept in memory with `localStorage` synchronization across browser tabs.
+* **Automatic Silent Token Refresh**: Built-in HTTP interceptor (`apiClient.ts`) automatically catches 401 Unauthorized responses and performs silent 24-hour token refreshes without interrupting user workflow.
+* **Single Active Session Enforcement**: Single active login per user/admin across devices. Logging in on a new device automatically invalidates older sessions.
 
-### 3. Moderated Question Submission & Admin Approval Queue
-* **Public Question Submission**: Users can submit new questions with difficulty levels, reference links, and notes.
-* **Admin Review Queue**: Submitted questions enter a `pending` state. Platform administrators can review, edit, **Approve** (publishing live to all users), or **Reject** submissions.
+### 3. Comprehensive Admin Portal (`/admin`)
+* **Auto-Redirect Clearance**: Visiting `/admin/login` when already authenticated automatically redirects to `/admin`.
+* **Tab & Track State Persistence**: Preserves active tab (**Pending Approvals** vs **Syllabus & Topic Manager**) and active track across browser refreshes.
+* **On-Demand API Triggers & Loader Feedback**: Tab/track selection immediately triggers API data fetches, rendering animated `<Loader2 />` spinners.
+* **Pending Approvals Queue**: Moderation queue to review, approve (publish live), or reject community-submitted questions.
+* **Full Syllabus Management**: Admin controls to create, edit, or delete tracks, topic sections, sub-sections, and questions.
 
-### 4. Direct External Problem Links
-* Every question includes direct clickable links to **LeetCode**, **GeeksforGeeks**, or **GitHub LLD Code Repositories** that open directly in a new tab.
-
-### 5. High-Performance Local SQLite Persistence
-* Backed by an in-process **SQLite** database (`better-sqlite3` in WAL mode) with zero external database dependencies.
-* Supports JSON export and import for local backups.
+### 4. Public Roadmap Tracker (`/`)
+* **Guest & Account Progress Sync**: Guest users track progress stored in `localStorage`. Logged-in users sync seamlessly with backend user progress APIs.
+* **Clean & Distraction-Free UI**: Clean dark-themed design (Tailwind slate-900 / indigo-500). Normal users see no delete controls on public roadmaps.
+* **Timeline Auto-Scaling**: Timeline dates scale based on complexity weights and target durations (30, 60, 90, 120, 160 days).
 
 ---
 
@@ -33,8 +36,42 @@ Built with **Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, and *
 
 * **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
 * **Frontend**: React 19, TypeScript, Tailwind CSS v4, Lucide Icons
-* **Database**: [SQLite](https://www.sqlite.org/) via `better-sqlite3`
-* **Utilities**: `date-fns`, `clsx`, `tailwind-merge`
+* **API Client**: Fetch wrapper with token interceptor & silent refresh
+* **Backend**: Express.js REST API with MongoDB & Mongoose
+
+---
+
+## 📂 Project Structure
+
+```text
+interview-preparation-tracker/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx         # Root layout with Toast notification provider
+│   │   ├── page.tsx           # Public Roadmap Tracker & Progress page
+│   │   ├── admin/
+│   │   │   ├── page.tsx       # Admin Dashboard (Pending Queue & Syllabus Manager)
+│   │   │   └── login/
+│   │   │       └── page.tsx   # Admin Login page with auto-redirect guard
+│   ├── components/            # UI Components (SectionCard, QuestionRow, InitialLoader, Modals, Toast)
+│   ├── lib/
+│   │   └── apiClient.ts       # Central API client, token handling & silent 401 refresh
+│   └── types/
+│       └── tracker.ts         # TypeScript definitions (Track, Section, Subsection, Question)
+├── public/
+├── package.json
+└── tsconfig.json
+```
+
+---
+
+## ⚙️ Environment Variables (`.env.local`)
+
+Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+```
 
 ---
 
@@ -42,7 +79,7 @@ Built with **Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, and *
 
 ### Prerequisites
 * Node.js v18.x or higher
-* npm / yarn / pnpm
+* Express backend server running on port `5000` (see `interview-prep-backend`)
 
 ### Installation
 
@@ -63,27 +100,13 @@ Built with **Next.js 15**, **React 19**, **TypeScript**, **Tailwind CSS**, and *
    ```
 
 4. **Open application**:
-   Navigate to `http://localhost:3000` in your web browser. On initial boot, the SQLite database (`./data/tracker.db`) will automatically initialize and seed the complete DSA and LLD syllabi.
+   Navigate to `http://localhost:3000` in your web browser.
 
----
-
-## 📖 Question Approval & Admin Workflow
-
-1. **Submitting a Question**:
-   * Click **Submit Question** in the top navbar.
-   * Select the **Parent Topic** (e.g. `Arrays` or `Graphs`), and the **Sub-section** dropdown will dynamically populate.
-   * Provide title, difficulty, optional reference link, and notes.
-   * Click **Submit Question for Review**.
-
-2. **Admin Reviewing & Approving Questions**:
-   * Click **Admin Approvals** in the navbar to open the pending submissions queue.
-   * Click **Approve & Publish Live** to publish the question to the main syllabus, or **Reject** to remove it.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on code standards, submitting new questions, reporting issues, and opening pull requests.
+5. **Build for Production**:
+   ```bash
+   npm run build
+   npm start
+   ```
 
 ---
 

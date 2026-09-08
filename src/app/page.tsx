@@ -14,10 +14,11 @@ import { Header } from '@/components/Header';
 import { TimelineHeader } from '@/components/TimelineHeader';
 import { SectionCard } from '@/components/SectionCard';
 import { AddQuestionModal } from '@/components/AddQuestionModal';
+import { AuthModal } from '@/components/AuthModal';
 import { InitialLoader } from '@/components/InitialLoader';
 import { AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient, clearAuthToken } from '@/lib/apiClient';
 
 const LOCAL_PROGRESS_KEY = 'planly_user_progress_v1';
 
@@ -32,6 +33,10 @@ export default function Home() {
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSectionsLoading, setIsSectionsLoading] = useState(false);
+
+  // User Authentication State
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleSelectTrack = (id: string) => {
     setActiveTrackId(id);
@@ -49,6 +54,23 @@ export default function Home() {
   const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false);
   const [addQuestionDefaultSectionId, setAddQuestionDefaultSectionId] = useState<string | undefined>();
   const [addQuestionDefaultSubsectionId, setAddQuestionDefaultSubsectionId] = useState<string | undefined>();
+
+  // Check auth status on mount
+  const checkAuthStatus = async () => {
+    try {
+      const res = await apiClient('/api/auth/check-auth');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        } else {
+          setCurrentUser(null);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to check auth status:', e);
+    }
+  };
 
   // Initial Fetch: Load Track Metadata List
   const fetchTracksData = async () => {
@@ -72,7 +94,7 @@ export default function Home() {
   };
 
   // Lazy Fetch: Load Sections for Active Track on Demand
-  const fetchTrackSections = async (trackId: string) => {
+  const fetchTrackSections = async (trackId: string, loggedInUser: { id: string } | null = currentUser) => {
     if (!trackId) return;
     setIsSectionsLoading(true);
     try {
@@ -80,10 +102,17 @@ export default function Home() {
       const sectionsData: Section[] = await res.json();
 
       let savedProgress: Record<string, boolean> = {};
-      try {
-        const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
-        if (rawProgress) savedProgress = JSON.parse(rawProgress);
-      } catch (err) {}
+      let savedNotes: Record<string, string> = {};
+
+      if (!loggedInUser) {
+        try {
+          const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+          if (rawProgress) savedProgress = JSON.parse(rawProgress);
+
+          const rawNotes = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_notes`);
+          if (rawNotes) savedNotes = JSON.parse(rawNotes);
+        } catch (err) {}
+      }
 
       const todayStr = new Date().toISOString().slice(0, 10);
       let savedTimeline = { targetDays: 90, startDate: todayStr };
@@ -103,7 +132,8 @@ export default function Home() {
           ...sub,
           questions: sub.questions.map((q) => ({
             ...q,
-            completed: savedProgress[q.id] !== undefined ? savedProgress[q.id] : q.completed,
+            completed: !loggedInUser && savedProgress[q.id] !== undefined ? savedProgress[q.id] : q.completed,
+            notes: !loggedInUser && savedNotes[q.id] !== undefined ? savedNotes[q.id] : q.notes,
           })),
         })),
       }));
@@ -134,16 +164,42 @@ export default function Home() {
   };
 
   useEffect(() => {
+    checkAuthStatus();
     fetchTracksData();
   }, []);
 
   useEffect(() => {
     if (activeTrackId) {
-      fetchTrackSections(activeTrackId);
+      fetchTrackSections(activeTrackId, currentUser);
     }
-  }, [activeTrackId]);
+  }, [activeTrackId, currentUser]);
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
+
+  // Calculate active section containing first unsolved question
+  let activeSectionId = activeTrack?.sections?.[0]?.id;
+  if (activeTrack && activeTrack.sections) {
+    for (const sec of activeTrack.sections) {
+      const hasUnsolved = sec.subsections.some((sub) => sub.questions.some((q) => !q.completed));
+      if (hasUnsolved) {
+        activeSectionId = sec.id;
+        break;
+      }
+    }
+  }
+
+  // Smooth scroll to active section on section load
+  useEffect(() => {
+    if (!isSectionsLoading && activeSectionId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(activeSectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [isSectionsLoading, activeSectionId]);
 
   // Apply timeline custom dates
   const handleApplyRoadmapTimeline = (targetDays: number, startDate: string) => {
@@ -174,7 +230,21 @@ export default function Home() {
 
   const handleToggleQuestion = async (questionId: string) => {
     if (!activeTrack) return;
-    let newCompletedState = false;
+
+    let currentQuestion: Question | undefined;
+    for (const sec of activeTrack.sections || []) {
+      for (const sub of sec.subsections || []) {
+        const found = sub.questions.find((q) => q.id === questionId);
+        if (found) {
+          currentQuestion = found;
+          break;
+        }
+      }
+      if (currentQuestion) break;
+    }
+
+    if (!currentQuestion) return;
+    const newCompletedState = !currentQuestion.completed;
 
     setTracks((prevTracks) =>
       prevTracks.map((t) => {
@@ -187,7 +257,6 @@ export default function Home() {
               ...sub,
               questions: sub.questions.map((q) => {
                 if (q.id === questionId) {
-                  newCompletedState = !q.completed;
                   return { ...q, completed: newCompletedState };
                 }
                 return q;
@@ -198,20 +267,28 @@ export default function Home() {
       })
     );
 
-    try {
-      const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
-      const savedProgress = rawProgress ? JSON.parse(rawProgress) : {};
-      savedProgress[questionId] = newCompletedState;
-      localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(savedProgress));
-    } catch (err) {}
-
-    try {
-      await apiClient('/api/questions/toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId }),
-      });
-    } catch (e) {}
+    if (currentUser) {
+      // Authenticated user: DO NOT use localStorage, persist via backend API
+      try {
+        await apiClient('/api/questions/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId }),
+        });
+      } catch (e) {
+        console.error('Failed to toggle question completion on server:', e);
+      }
+    } else {
+      // Guest user: strictly persist progress in localStorage
+      try {
+        const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+        const savedProgress = rawProgress ? JSON.parse(rawProgress) : {};
+        savedProgress[questionId] = newCompletedState;
+        localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(savedProgress));
+      } catch (err) {
+        console.error('Failed to save guest progress in localStorage:', err);
+      }
+    }
 
     if (newCompletedState) {
       showToast('Question marked as completed! 🎉', 'success');
@@ -243,14 +320,30 @@ export default function Home() {
     );
 
     if (updatedFields.notes !== undefined) {
-      try {
-        await apiClient('/api/questions/notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ questionId, notes: updatedFields.notes }),
-        });
-        showToast('Notes saved successfully', 'info');
-      } catch (e) {}
+      if (currentUser) {
+        // Authenticated user: save notes via backend API
+        try {
+          await apiClient('/api/questions/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ questionId, notes: updatedFields.notes }),
+          });
+          showToast('Notes saved successfully', 'info');
+        } catch (e) {
+          console.error('Failed to save notes on server:', e);
+        }
+      } else {
+        // Guest user: save notes in localStorage
+        try {
+          const rawNotes = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_notes`);
+          const savedNotes = rawNotes ? JSON.parse(rawNotes) : {};
+          savedNotes[questionId] = updatedFields.notes;
+          localStorage.setItem(`${LOCAL_PROGRESS_KEY}_notes`, JSON.stringify(savedNotes));
+          showToast('Notes saved locally (Guest Mode)', 'info');
+        } catch (err) {
+          console.error('Failed to save guest notes in localStorage:', err);
+        }
+      }
     }
   };
 
@@ -286,6 +379,25 @@ export default function Home() {
       }
     } catch (e) {
       showToast('Error submitting question.', 'error');
+    }
+  };
+
+  const handleAuthSuccess = (user: { id: string; username: string; role: string }) => {
+    setCurrentUser(user);
+    if (activeTrackId) {
+      fetchTrackSections(activeTrackId, user);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await apiClient('/api/auth/logout', { method: 'POST' });
+    } catch (e) {}
+    clearAuthToken();
+    setCurrentUser(null);
+    showToast('Signed out. Continuing as guest.', 'info');
+    if (activeTrackId) {
+      fetchTrackSections(activeTrackId, null);
     }
   };
 
@@ -326,17 +438,6 @@ export default function Home() {
     return <InitialLoader title="Planly" subtitle="Preparing your interview roadmap..." />;
   }
 
-  let activeSectionId = activeTrack?.sections?.[0]?.id;
-  if (activeTrack && activeTrack.sections) {
-    for (const sec of activeTrack.sections) {
-      const hasUnsolved = sec.subsections.some((sub) => sub.questions.some((q) => !q.completed));
-      if (hasUnsolved) {
-        activeSectionId = sec.id;
-        break;
-      }
-    }
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       
@@ -352,6 +453,9 @@ export default function Home() {
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -405,7 +509,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-6 w-full gap-2">
+      <footer className="py-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-6 w-full gap-2">
         <span>Planly — Interview Preparation Tracker</span>
         <a
           href="/admin"
@@ -427,6 +531,13 @@ export default function Home() {
           onAddQuestion={handleAddQuestion}
         />
       )}
+
+      {/* User Login / Register Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }
