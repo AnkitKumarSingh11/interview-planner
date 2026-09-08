@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const questionId = submitQuestionForApproval({
+    const questionId = await submitQuestionForApproval({
       trackId,
       sectionId,
       newTopicName,

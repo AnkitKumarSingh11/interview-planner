@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
     }
 
-    deleteTrack(trackId);
+    await deleteTrack(trackId);
     return NextResponse.json({ success: true, message: 'Track deleted successfully' });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });

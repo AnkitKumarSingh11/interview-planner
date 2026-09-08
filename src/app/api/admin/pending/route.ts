@@ -10,7 +10,7 @@ export async function GET() {
     if (!authenticated) {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
     }
-    const pendingQuestions = getPendingQuestions();
+    const pendingQuestions = await getPendingQuestions();
     return NextResponse.json(pendingQuestions);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

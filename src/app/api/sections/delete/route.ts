@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Section ID is required' }, { status: 400 });
     }
 
-    deleteSectionFromTrack(sectionId);
+    await deleteSectionFromTrack(sectionId);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

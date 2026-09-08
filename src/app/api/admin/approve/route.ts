@@ -17,9 +17,9 @@ export async function POST(request: Request) {
     }
 
     if (action === 'approve') {
-      approveQuestion(questionId);
+      await approveQuestion(questionId);
     } else if (action === 'reject') {
-      rejectQuestion(questionId);
+      await rejectQuestion(questionId);
     }
 
     return NextResponse.json({ success: true, action });

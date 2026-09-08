@@ -17,12 +17,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    const isValid = verifyAdminCredentials(username, currentPassword);
+    const isValid = await verifyAdminCredentials(username, currentPassword);
     if (!isValid) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
     }
 
-    const updated = updateAdminPassword(username, newPassword);
+    const updated = await updateAdminPassword(username, newPassword);
     if (updated) {
       return NextResponse.json({ success: true, message: 'Password updated successfully!' });
     } else {

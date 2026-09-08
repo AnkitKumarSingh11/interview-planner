@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const tracks = getAllTracks();
+    const tracks = await getAllTracks();
     return NextResponse.json(tracks);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
-    const trackId = createNewTrack(title, description || '');
-    const tracks = getAllTracks();
+    const trackId = await createNewTrack(title, description || '');
+    const tracks = await getAllTracks();
     return NextResponse.json({ trackId, tracks });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

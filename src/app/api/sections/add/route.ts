@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Track ID and Topic are required' }, { status: 400 });
     }
 
-    const sectionId = addSectionToTrack(trackId, {
+    const sectionId = await addSectionToTrack(trackId, {
       topic,
       sectionTitle,
       startDate: startDate || 'TBD',

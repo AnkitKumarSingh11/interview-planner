@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!trackId) {
       return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
     }
-    updateTrackTimelineSettings(trackId, roadmapStartDate, targetDays, sections);
+    await updateTrackTimelineSettings(trackId, roadmapStartDate, targetDays, sections);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

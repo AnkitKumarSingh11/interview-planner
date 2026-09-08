@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!questionId) {
       return NextResponse.json({ error: 'Question ID is required' }, { status: 400 });
     }
-    updateQuestionNotes(questionId, notes || '');
+    await updateQuestionNotes(questionId, notes || '');
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

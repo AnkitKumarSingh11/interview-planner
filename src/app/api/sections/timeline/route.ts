@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!sectionId) {
       return NextResponse.json({ error: 'Section ID is required' }, { status: 400 });
     }
-    updateSectionDates(sectionId, startDate, endDate);
+    await updateSectionDates(sectionId, startDate, endDate);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
