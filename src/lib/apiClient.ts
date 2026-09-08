@@ -1,4 +1,5 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const rawBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, '');
 
 let inMemorySessionToken: string | null = null;
 let isRefreshing = false;
