@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAdminToken, ADMIN_COOKIE_NAME } from '@/lib/auth';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect /admin routes (except /admin/login)
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    const token = request.cookies.get('planly_token')?.value || request.cookies.get('planly_admin_session')?.value;
 
-    if (!token || !(await verifyAdminToken(token))) {
+    if (!token) {
       const loginUrl = new URL('/admin/login', request.url);
       return NextResponse.redirect(loginUrl);
     }
