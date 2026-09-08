@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Track, 
+  Section,
   Question, 
   Difficulty, 
   FilterStatus, 
@@ -14,7 +15,7 @@ import { TimelineHeader } from '@/components/TimelineHeader';
 import { SectionCard } from '@/components/SectionCard';
 import { AddQuestionModal } from '@/components/AddQuestionModal';
 import { InitialLoader } from '@/components/InitialLoader';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { apiClient } from '@/lib/apiClient';
 
@@ -30,6 +31,7 @@ export default function Home() {
     return 'dsa';
   });
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSectionsLoading, setIsSectionsLoading] = useState(false);
 
   const handleSelectTrack = (id: string) => {
     setActiveTrackId(id);
@@ -48,82 +50,86 @@ export default function Home() {
   const [addQuestionDefaultSectionId, setAddQuestionDefaultSectionId] = useState<string | undefined>();
   const [addQuestionDefaultSubsectionId, setAddQuestionDefaultSubsectionId] = useState<string | undefined>();
 
-  // Fetch Tracks from SQLite API & Overlay User Local Completion Progress & Timeline
+  // Initial Fetch: Load Track Metadata List
   const fetchTracksData = async () => {
     try {
       const res = await apiClient('/api/tracks');
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        
-        let savedProgress: Record<string, boolean> = {};
-        try {
-          const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
-          if (rawProgress) savedProgress = JSON.parse(rawProgress);
-        } catch (err) {}
-
-        const todayStr = new Date().toISOString().slice(0, 10);
-
-        const mapped = data.map((track: Track) => {
-          let savedTimeline = {
-            targetDays: 90,
-            startDate: todayStr,
-          };
-
-          try {
-            const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${track.id}`);
-            if (rawTimeline) {
-              const parsed = JSON.parse(rawTimeline);
-              if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
-              if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
-            } else {
-              localStorage.setItem(
-                `${LOCAL_PROGRESS_KEY}_timeline_${track.id}`,
-                JSON.stringify(savedTimeline)
-              );
-            }
-          } catch (err) {}
-
-          const targetDays = savedTimeline.targetDays;
-          const roadmapStartDate = savedTimeline.startDate;
-
-          const updatedSections = track.sections.map((sec) => ({
-            ...sec,
-            subsections: sec.subsections.map((sub) => ({
-              ...sub,
-              questions: sub.questions.map((q) => ({
-                ...q,
-                completed: savedProgress[q.id] !== undefined ? savedProgress[q.id] : q.completed,
-              })),
-            })),
-          }));
-
-          const recalculatedSections = recalculateTrackTimeline(
-            updatedSections,
-            roadmapStartDate,
-            targetDays
-          );
-
-          return {
-            ...track,
-            targetDays,
-            roadmapStartDate,
-            sections: recalculatedSections,
-          };
-        });
-
-        setTracks(mapped);
-        
+        setTracks(data);
         const savedTrackId = typeof window !== 'undefined' ? localStorage.getItem('planly_active_track_id') : null;
-        if (savedTrackId && mapped.some((t) => t.id === savedTrackId)) {
+        if (savedTrackId && data.some((t: Track) => t.id === savedTrackId)) {
           setActiveTrackId(savedTrackId);
-        } else if (!activeTrackId || !mapped.some((t) => t.id === activeTrackId)) {
-          handleSelectTrack(mapped[0].id);
+        } else {
+          setActiveTrackId(data[0].id);
         }
       }
     } catch (e) {
-      console.error('Failed to load tracks from API:', e);
+      console.error('Failed to load tracks list from API:', e);
     } finally {
       setIsLoaded(true);
+    }
+  };
+
+  // Lazy Fetch: Load Sections for Active Track on Demand
+  const fetchTrackSections = async (trackId: string) => {
+    if (!trackId) return;
+    setIsSectionsLoading(true);
+    try {
+      const res = await apiClient(`/api/tracks/${trackId}/sections`);
+      const sectionsData: Section[] = await res.json();
+
+      let savedProgress: Record<string, boolean> = {};
+      try {
+        const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+        if (rawProgress) savedProgress = JSON.parse(rawProgress);
+      } catch (err) {}
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      let savedTimeline = { targetDays: 90, startDate: todayStr };
+
+      try {
+        const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${trackId}`);
+        if (rawTimeline) {
+          const parsed = JSON.parse(rawTimeline);
+          if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
+          if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
+        }
+      } catch (err) {}
+
+      const updatedSections = (Array.isArray(sectionsData) ? sectionsData : []).map((sec) => ({
+        ...sec,
+        subsections: sec.subsections.map((sub) => ({
+          ...sub,
+          questions: sub.questions.map((q) => ({
+            ...q,
+            completed: savedProgress[q.id] !== undefined ? savedProgress[q.id] : q.completed,
+          })),
+        })),
+      }));
+
+      const recalculatedSections = recalculateTrackTimeline(
+        updatedSections,
+        savedTimeline.startDate,
+        savedTimeline.targetDays
+      );
+
+      setTracks((prev) =>
+        prev.map((t) =>
+          t.id === trackId
+            ? {
+                ...t,
+                targetDays: savedTimeline.targetDays,
+                roadmapStartDate: savedTimeline.startDate,
+                sections: recalculatedSections,
+              }
+            : t
+        )
+      );
+    } catch (e) {
+      console.error(`Failed to load sections for track ${trackId}:`, e);
+    } finally {
+      setIsSectionsLoading(false);
     }
   };
 
@@ -131,95 +137,58 @@ export default function Home() {
     fetchTracksData();
   }, []);
 
+  useEffect(() => {
+    if (activeTrackId) {
+      fetchTrackSections(activeTrackId);
+    }
+  }, [activeTrackId]);
+
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
-  // Auto-scroll smoothly to the first unsolved question so the user can easily resume
-  useEffect(() => {
-    if (!isLoaded || !activeTrack) return;
-
-    let firstUnsolvedId: string | null = null;
-    for (const sec of activeTrack.sections) {
-      for (const sub of sec.subsections) {
-        for (const q of sub.questions) {
-          if (!q.completed) {
-            firstUnsolvedId = q.id;
-            break;
-          }
-        }
-        if (firstUnsolvedId) break;
-      }
-      if (firstUnsolvedId) break;
-    }
-
-    if (firstUnsolvedId) {
-      const targetId = firstUnsolvedId;
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`q-row-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoaded, activeTrackId]);
-
-  // Handler: Apply Roadmap Target Days Timeline across all sections
-  const handleApplyRoadmapTimeline = (targetDays: number, startDateStr: string) => {
+  // Apply timeline custom dates
+  const handleApplyRoadmapTimeline = (targetDays: number, startDate: string) => {
     if (!activeTrack) return;
+    try {
+      localStorage.setItem(
+        `${LOCAL_PROGRESS_KEY}_timeline_${activeTrack.id}`,
+        JSON.stringify({ startDate, targetDays })
+      );
+    } catch (e) {}
+
     const recalculatedSections = recalculateTrackTimeline(
-      activeTrack.sections,
-      startDateStr,
+      activeTrack.sections || [],
+      startDate,
       targetDays
     );
 
-    setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
-        return {
-          ...track,
-          targetDays,
-          roadmapStartDate: startDateStr,
-          sections: recalculatedSections,
-        };
-      })
+    setTracks((prev) =>
+      prev.map((t) =>
+        t.id === activeTrack.id
+          ? { ...t, roadmapStartDate: startDate, targetDays, sections: recalculatedSections }
+          : t
+      )
     );
 
-    // Save timeline settings in localStorage per track
-    try {
-      localStorage.setItem(
-        `${LOCAL_PROGRESS_KEY}_timeline_${activeTrackId}`,
-        JSON.stringify({ targetDays, startDate: startDateStr })
-      );
-    } catch (err) {}
-
-    showToast(`Timeline updated: ${targetDays} days starting ${startDateStr}`, 'success');
+    showToast('Roadmap timeline recalculated!', 'success');
   };
 
-  // Handler: Toggle Question Completion (Local Progress)
-  const handleToggleQuestion = (questionId: string) => {
-    let nextCompleted = false;
-
-    const currentQ = activeTrack?.sections
-      .flatMap((s) => s.subsections)
-      .flatMap((sub) => sub.questions)
-      .find((q) => q.id === questionId);
-
-    if (currentQ) {
-      nextCompleted = !currentQ.completed;
-    }
+  const handleToggleQuestion = async (questionId: string) => {
+    if (!activeTrack) return;
+    let newCompletedState = false;
 
     setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
+      prevTracks.map((t) => {
+        if (t.id !== activeTrack.id) return t;
         return {
-          ...track,
-          sections: track.sections.map((section) => ({
-            ...section,
-            subsections: section.subsections.map((sub) => ({
+          ...t,
+          sections: t.sections.map((sec) => ({
+            ...sec,
+            subsections: sec.subsections.map((sub) => ({
               ...sub,
               questions: sub.questions.map((q) => {
                 if (q.id === questionId) {
-                  return { ...q, completed: nextCompleted };
+                  newCompletedState = !q.completed;
+                  return { ...q, completed: newCompletedState };
                 }
                 return q;
               }),
@@ -229,37 +198,62 @@ export default function Home() {
       })
     );
 
-    // Save exact computed progress to localStorage instantly
     try {
       const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
-      const progressMap = rawProgress ? JSON.parse(rawProgress) : {};
-      progressMap[questionId] = nextCompleted;
-      localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(progressMap));
+      const savedProgress = rawProgress ? JSON.parse(rawProgress) : {};
+      savedProgress[questionId] = newCompletedState;
+      localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(savedProgress));
+    } catch (err) {}
+
+    try {
+      await apiClient('/api/questions/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId }),
+      });
     } catch (e) {}
+
+    if (newCompletedState) {
+      showToast('Question marked as completed! 🎉', 'success');
+    }
   };
 
-  // Handler: Update Question metadata (notes)
-  const handleUpdateQuestion = (questionId: string, updates: Partial<Question>) => {
+  const handleUpdateQuestion = async (questionId: string, updatedFields: Partial<Question>) => {
+    if (!activeTrack) return;
+
     setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
+      prevTracks.map((t) => {
+        if (t.id !== activeTrack.id) return t;
         return {
-          ...track,
-          sections: track.sections.map((section) => ({
-            ...section,
-            subsections: section.subsections.map((sub) => ({
+          ...t,
+          sections: t.sections.map((sec) => ({
+            ...sec,
+            subsections: sec.subsections.map((sub) => ({
               ...sub,
-              questions: sub.questions.map((q) =>
-                q.id === questionId ? { ...q, ...updates } : q
-              ),
+              questions: sub.questions.map((q) => {
+                if (q.id === questionId) {
+                  return { ...q, ...updatedFields };
+                }
+                return q;
+              }),
             })),
           })),
         };
       })
     );
+
+    if (updatedFields.notes !== undefined) {
+      try {
+        await apiClient('/api/questions/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId, notes: updatedFields.notes }),
+        });
+        showToast('Notes saved successfully', 'info');
+      } catch (e) {}
+    }
   };
 
-  // Handler: Submit Question for Admin Approval
   const handleAddQuestion = async (payload: {
     sectionId?: string;
     newTopicName?: string;
@@ -285,19 +279,17 @@ export default function Home() {
         }),
       });
 
-      const data = await res.json();
       if (res.ok) {
-        showToast('🎉 Question submitted for Admin Approval! An administrator will review and publish it live.', 'success');
+        showToast('Question submitted for admin review!', 'success');
       } else {
-        showToast(data.error || 'Failed to submit question.', 'error');
+        showToast('Failed to submit question.', 'error');
       }
     } catch (e) {
-      console.error('Failed to submit question:', e);
+      showToast('Error submitting question.', 'error');
     }
   };
 
-  // Filter sections & questions based on search & filter state
-  const filteredSections = activeTrack ? activeTrack.sections.map((section) => {
+  const filteredSections = activeTrack && activeTrack.sections ? activeTrack.sections.map((section) => {
     const searchLower = searchQuery.toLowerCase();
 
     const topicMatches =
@@ -334,9 +326,8 @@ export default function Home() {
     return <InitialLoader title="Planly" subtitle="Preparing your interview roadmap..." />;
   }
 
-  // Find active section (section containing the first unsolved question)
-  let activeSectionId = activeTrack?.sections[0]?.id;
-  if (activeTrack) {
+  let activeSectionId = activeTrack?.sections?.[0]?.id;
+  if (activeTrack && activeTrack.sections) {
     for (const sec of activeTrack.sections) {
       const hasUnsolved = sec.subsections.some((sub) => sub.questions.some((q) => !q.completed));
       if (hasUnsolved) {
@@ -378,8 +369,14 @@ export default function Home() {
           />
         )}
 
-        {/* Topic Section Cards List */}
-        {filteredSections.length === 0 ? (
+        {/* Section Loader or Content Cards */}
+        {isSectionsLoading ? (
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
+            <h3 className="text-base font-bold text-slate-200">Loading Track Topics & Questions...</h3>
+            <p className="text-xs text-slate-400">Fetching normalized syllabus sections from database</p>
+          </div>
+        ) : filteredSections.length === 0 ? (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
             <AlertCircle className="w-8 h-8 text-slate-500 mx-auto" />
             <h3 className="text-base font-bold text-slate-300">No matching topics or questions found</h3>

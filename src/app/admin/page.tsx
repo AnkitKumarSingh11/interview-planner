@@ -114,14 +114,35 @@ export default function AdminDashboardPage() {
       const tracksData = await tracksRes.json();
       if (Array.isArray(tracksData) && tracksData.length > 0) {
         setTracks(tracksData);
-        if (!activeTrackId || !tracksData.some(t => t.id === activeTrackId)) {
-          setActiveTrackId(tracksData[0].id);
-        }
+        const targetId = activeTrackId && tracksData.some(t => t.id === activeTrackId) ? activeTrackId : tracksData[0].id;
+        setActiveTrackId(targetId);
+        fetchTrackSections(targetId);
       }
     } catch (e) {
       console.error('Failed to load admin data:', e);
     }
   };
+
+  const fetchTrackSections = async (trackId: string) => {
+    if (!trackId) return;
+    try {
+      const res = await apiClient(`/api/tracks/${trackId}/sections`);
+      const sectionsData = await res.json();
+      if (Array.isArray(sectionsData)) {
+        setTracks((prev) =>
+          prev.map((t) => (t.id === trackId ? { ...t, sections: sectionsData } : t))
+        );
+      }
+    } catch (e) {
+      console.error(`Failed to load sections for track ${trackId}:`, e);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && activeTrackId) {
+      fetchTrackSections(activeTrackId);
+    }
+  }, [activeTrackId, isAuthenticated]);
 
   const handleLogout = async () => {
     try {
