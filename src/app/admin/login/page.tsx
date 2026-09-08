@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Target, Lock, User, ShieldCheck } from 'lucide-react';
+import { apiClient, setAuthToken } from '@/lib/apiClient';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await apiClient('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -25,6 +26,9 @@ export default function AdminLoginPage() {
 
       const data = await res.json();
       if (res.ok) {
+        if (data.token) {
+          setAuthToken(data.token);
+        }
         router.push('/admin');
       } else {
         setError(data.error || 'Invalid username or password');

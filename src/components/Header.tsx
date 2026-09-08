@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Planly
                 </h1>
                 <span className="px-2 py-0.5 text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-full">
-                  Interview Tracker
+                  Interview Preparation Tracker
                 </span>
               </div>
               <p className="text-xs text-slate-400">Roadmap & Progress Tracker</p>

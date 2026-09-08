@@ -25,6 +25,7 @@ import { AddTrackModal } from '@/components/AddTrackModal';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { InitialLoader } from '@/components/InitialLoader';
 import { useToast } from '@/components/Toast';
+import { apiClient, clearAuthToken } from '@/lib/apiClient';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/admin/check-auth');
+        const res = await apiClient('/api/admin/check-auth');
         const data = await res.json();
         if (data.authenticated) {
           setIsAuthenticated(true);
@@ -101,15 +102,15 @@ export default function AdminDashboardPage() {
 
   const fetchAdminData = async () => {
     try {
-      const pendingRes = await fetch('/api/admin/pending');
-      if (pendingRes.status === 401) {
+      const pendingRes = await apiClient('/api/admin/pending');
+      if (pendingRes.status === 401 || pendingRes.status === 403) {
         router.replace('/admin/login');
         return;
       }
       const pendingData = await pendingRes.json();
       if (Array.isArray(pendingData)) setPendingQuestions(pendingData);
 
-      const tracksRes = await fetch('/api/tracks');
+      const tracksRes = await apiClient('/api/tracks');
       const tracksData = await tracksRes.json();
       if (Array.isArray(tracksData) && tracksData.length > 0) {
         setTracks(tracksData);
@@ -124,16 +125,18 @@ export default function AdminDashboardPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
+      await apiClient('/api/admin/logout', { method: 'POST' });
+      clearAuthToken();
       router.replace('/admin/login');
     } catch (e) {
-      console.error('Failed to log out:', e);
+      clearAuthToken();
+      router.replace('/admin/login');
     }
   };
 
   const handleApprove = async (questionId: string) => {
     try {
-      const res = await fetch('/api/admin/approve', {
+      const res = await apiClient('/api/admin/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questionId, action: 'approve' }),
@@ -149,7 +152,7 @@ export default function AdminDashboardPage() {
 
   const handleReject = async (questionId: string) => {
     try {
-      const res = await fetch('/api/admin/approve', {
+      const res = await apiClient('/api/admin/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questionId, action: 'reject' }),
@@ -165,7 +168,7 @@ export default function AdminDashboardPage() {
 
   const handleSaveTimeline = async (sectionId: string, startDate: string, endDate: string) => {
     try {
-      await fetch('/api/sections/timeline', {
+      await apiClient('/api/sections/timeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sectionId, startDate, endDate }),
@@ -184,7 +187,7 @@ export default function AdminDashboardPage() {
       message: 'Are you sure you want to delete this main topic and all its sub-sections/questions? This action cannot be undone.',
       onConfirm: async () => {
         try {
-          await fetch('/api/sections/delete', {
+          await apiClient('/api/sections/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sectionId }),
@@ -205,7 +208,7 @@ export default function AdminDashboardPage() {
       message: `Are you sure you want to delete the sub-section "${title}" and all its questions? This action cannot be undone.`,
       onConfirm: async () => {
         try {
-          await fetch('/api/subsections/delete', {
+          await apiClient('/api/subsections/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ subsectionId }),
@@ -222,7 +225,7 @@ export default function AdminDashboardPage() {
   const handleAddSection = async (sectionData: any) => {
     if (!activeTrackId) return;
     try {
-      await fetch('/api/sections/add', {
+      await apiClient('/api/sections/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -239,7 +242,7 @@ export default function AdminDashboardPage() {
 
   const handleAddTrack = async (title: string, description: string) => {
     try {
-      const res = await fetch('/api/tracks', {
+      const res = await apiClient('/api/tracks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, description }),
@@ -270,7 +273,7 @@ export default function AdminDashboardPage() {
       }" and all its topic sections and questions? This action cannot be undone.`,
       onConfirm: async () => {
         try {
-          const res = await fetch('/api/tracks/delete', {
+          const res = await apiClient('/api/tracks/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ trackId }),

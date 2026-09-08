@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { KeyRound, X, Check, Lock } from 'lucide-react';
+import { apiClient } from '@/lib/apiClient';
 
 interface ChangePasswordModalProps {
   username: string;
@@ -40,7 +41,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/change-password', {
+      const res = await apiClient('/api/admin/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

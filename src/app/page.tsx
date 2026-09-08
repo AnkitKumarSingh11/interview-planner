@@ -16,6 +16,7 @@ import { AddQuestionModal } from '@/components/AddQuestionModal';
 import { InitialLoader } from '@/components/InitialLoader';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { apiClient } from '@/lib/apiClient';
 
 const LOCAL_PROGRESS_KEY = 'planly_user_progress_v1';
 
@@ -50,7 +51,7 @@ export default function Home() {
   // Fetch Tracks from SQLite API & Overlay User Local Completion Progress & Timeline
   const fetchTracksData = async () => {
     try {
-      const res = await fetch('/api/tracks');
+      const res = await apiClient('/api/tracks');
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         
@@ -272,7 +273,7 @@ export default function Home() {
   }) => {
     if (!activeTrackId) return;
     try {
-      const res = await fetch('/api/questions/submit', {
+      const res = await apiClient('/api/questions/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
