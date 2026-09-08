@@ -32,7 +32,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   onAddQuestion,
 }) => {
   const [selectedSectionId, setSelectedSectionId] = useState<string>(
-    defaultSectionId || track.sections[0]?.id || ''
+    defaultSectionId || track.sections?.[0]?.id || ''
   );
   const [isNewParentTopic, setIsNewParentTopic] = useState<boolean>(false);
   const [customParentTopic, setCustomParentTopic] = useState<string>('');
@@ -50,7 +50,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
     if (defaultSectionId) {
       setSelectedSectionId(defaultSectionId);
       setIsNewParentTopic(false);
-    } else if (track.sections.length > 0) {
+    } else if (track.sections && track.sections.length > 0) {
       setSelectedSectionId(track.sections[0].id);
       setIsNewParentTopic(false);
     } else {
@@ -58,7 +58,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
     }
   }, [defaultSectionId, track, isOpen]);
 
-  const currentParentSection = track.sections.find((s) => s.id === selectedSectionId);
+  const currentParentSection = (track.sections || []).find((s) => s.id === selectedSectionId);
 
   useEffect(() => {
     if (!isNewParentTopic && currentParentSection && currentParentSection.subsections.length > 0) {
@@ -198,7 +198,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                 onChange={(e) => setSelectedSectionId(e.target.value)}
                 className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-slate-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-all"
               >
-                {track.sections.map((sec) => (
+                {(track.sections || []).map((sec) => (
                   <option key={sec.id} value={sec.id}>
                     {sec.topic} ({sec.subsections.length} sub-sections)
                   </option>

@@ -68,7 +68,7 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-bold text-white">{track.title}</h2>
             <span className="px-3 py-1 text-xs font-medium bg-slate-800 text-slate-300 rounded-full border border-slate-700">
-              {track.sections.length} Sections
+              {track.sections?.length || 0} Sections
             </span>
           </div>
 
