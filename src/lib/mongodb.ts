@@ -63,6 +63,7 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000, // 5 second timeout for fast failover to fallback
     };
 
     cached.promise = mongoose.connect(uri, opts).then((m) => {
@@ -75,8 +76,8 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
-    console.error('❌ Failed to connect to MongoDB:', e);
-    throw e;
+    console.warn('⚠️ Could not connect to MongoDB Atlas (e.g. IP whitelist or network error). Falling back to in-memory tracks data.');
+    return null;
   }
 
   return cached.conn;

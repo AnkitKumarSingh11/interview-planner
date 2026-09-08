@@ -23,6 +23,7 @@ import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { AddSectionModal } from '@/components/AddSectionModal';
 import { AddTrackModal } from '@/components/AddTrackModal';
 import { ConfirmModal } from '@/components/ConfirmModal';
+import { InitialLoader } from '@/components/InitialLoader';
 import { useToast } from '@/components/Toast';
 
 export default function AdminDashboardPage() {
@@ -294,9 +295,10 @@ export default function AdminDashboardPage() {
   // If unauthenticated or checking auth status, do not render Admin Dashboard UI
   if (isAuthenticated === null || isAuthenticated === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 text-sm font-medium">
-        Verifying Admin Access...
-      </div>
+      <InitialLoader 
+        title="Planly Admin" 
+        subtitle="Verifying Admin Security Clearance..." 
+      />
     );
   }
 

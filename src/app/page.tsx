@@ -13,6 +13,7 @@ import { Header } from '@/components/Header';
 import { TimelineHeader } from '@/components/TimelineHeader';
 import { SectionCard } from '@/components/SectionCard';
 import { AddQuestionModal } from '@/components/AddQuestionModal';
+import { InitialLoader } from '@/components/InitialLoader';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
@@ -329,11 +330,7 @@ export default function Home() {
   }).filter((sec) => sec.subsections.some((sub) => sub.questions.length > 0) || searchQuery === '') : [];
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 text-sm">
-        Loading interview roadmap...
-      </div>
-    );
+    return <InitialLoader title="Planly" subtitle="Preparing your interview roadmap..." />;
   }
 
   // Find active section (section containing the first unsolved question)
