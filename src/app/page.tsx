@@ -20,7 +20,7 @@ import { AddSectionModal } from '@/components/AddSectionModal';
 import { AddTrackModal } from '@/components/AddTrackModal';
 import { AlertCircle } from 'lucide-react';
 
-const STORAGE_KEY = 'planly_interview_tracker_v2';
+const STORAGE_KEY = 'planly_interview_tracker_v3';
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>(initialTracks);
@@ -68,7 +68,7 @@ export default function Home() {
   // Current active track
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
-  // Handler: Apply Roadmap Target Days Timeline across all sections
+  // Handler: Apply Roadmap Target Days Timeline across all sections using document complexity weights
   const handleApplyRoadmapTimeline = (targetDays: number, startDateStr: string) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
@@ -164,7 +164,7 @@ export default function Home() {
     );
   };
 
-  // Handler: Add Question
+  // Handler: Add Question under parent section & subsection
   const handleAddQuestion = (
     sectionId: string,
     subsectionTitle: string,
@@ -218,7 +218,7 @@ export default function Home() {
     );
   };
 
-  // Handler: Add Section
+  // Handler: Add Section Topic
   const handleAddSection = (sectionData: {
     topic?: string;
     sectionTitle: string;
@@ -228,10 +228,11 @@ export default function Home() {
   }) => {
     const newSection: Section = {
       id: `sec-custom-${Date.now()}`,
-      topic: sectionData.topic,
+      topic: sectionData.topic || sectionData.sectionTitle,
       sectionTitle: sectionData.sectionTitle,
       startDate: sectionData.startDate,
       endDate: sectionData.endDate,
+      originalWeightDays: 5,
       subsections: (sectionData.initialSubsections || ['General']).map((stTitle, i) => ({
         id: `sub-custom-${Date.now()}-${i}`,
         title: stTitle,
@@ -250,9 +251,9 @@ export default function Home() {
     );
   };
 
-  // Handler: Delete Section
+  // Handler: Delete Section Topic
   const handleDeleteSection = (sectionId: string) => {
-    if (!confirm('Are you sure you want to delete this section and all its questions?')) return;
+    if (!confirm('Are you sure you want to delete this topic and all its sub-sections and questions?')) return;
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
@@ -276,9 +277,10 @@ export default function Home() {
       sections: [
         {
           id: `sec-${Date.now()}`,
-          sectionTitle: 'Getting Started',
+          topic: 'Getting Started',
           startDate: 'TBD',
           endDate: 'TBD',
+          originalWeightDays: 7,
           subsections: [
             {
               id: `sub-${Date.now()}`,
@@ -335,14 +337,16 @@ export default function Home() {
   const filteredSections = activeTrack ? activeTrack.sections.map((section) => {
     const searchLower = searchQuery.toLowerCase();
 
-    const sectionMatches =
-      (section.topic && section.topic.toLowerCase().includes(searchLower)) ||
-      section.sectionTitle.toLowerCase().includes(searchLower);
+    const topicMatches =
+      section.topic.toLowerCase().includes(searchLower) ||
+      (section.sectionTitle && section.sectionTitle.toLowerCase().includes(searchLower));
 
     const filteredSubsections = section.subsections.map((sub) => {
       const filteredQuestions = sub.questions.filter((q) => {
         const matchesSearch =
-          sectionMatches || q.title.toLowerCase().includes(searchLower);
+          topicMatches ||
+          sub.title.toLowerCase().includes(searchLower) ||
+          q.title.toLowerCase().includes(searchLower);
 
         const matchesStatus =
           filterStatus === 'all'
@@ -408,17 +412,17 @@ export default function Home() {
           />
         )}
 
-        {/* Section Cards List */}
+        {/* Topic Section Cards List */}
         {filteredSections.length === 0 ? (
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
             <AlertCircle className="w-8 h-8 text-slate-500 mx-auto" />
-            <h3 className="text-base font-bold text-slate-300">No matching questions or topics found</h3>
+            <h3 className="text-base font-bold text-slate-300">No matching topics or questions found</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               Try adjusting your search query or reset status / difficulty filters.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {filteredSections.map((section) => (
               <SectionCard
                 key={section.id}

@@ -1,9 +1,13 @@
 import { Section } from '@/types/tracker';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
+/**
+ * Recalculate start and end dates for each main topic section
+ * based on its exact document complexity weight (originalWeightDays).
+ */
 export function recalculateTrackTimeline(
   sections: Section[],
-  startDateStr: string, // YYYY-MM-DD
+  startDateStr: string,
   totalDays: number
 ): Section[] {
   if (sections.length === 0) return sections;
@@ -16,23 +20,21 @@ export function recalculateTrackTimeline(
     baseDate = new Date();
   }
 
-  // Weight each section based on question count (or equal weight if 0)
-  const totalQuestions = sections.reduce(
-    (acc, sec) => acc + sec.subsections.reduce((sAcc, sub) => sAcc + sub.questions.length, 0),
+  // Sum of original document weights (default to 90 days if not set)
+  const totalOriginalWeight = sections.reduce(
+    (acc, sec) => acc + (sec.originalWeightDays || 1),
     0
   );
 
   let currentDayOffset = 0;
 
-  return sections.map((sec, index) => {
-    const qCount = sec.subsections.reduce((acc, sub) => acc + sub.questions.length, 0);
-    const weight = totalQuestions > 0 ? qCount / totalQuestions : 1 / sections.length;
-    
-    // Allocate days to section
-    const allocatedDays = Math.max(1, Math.round(weight * totalDays));
+  return sections.map((sec) => {
+    const weight = sec.originalWeightDays || 1;
+    // Calculate proportional days based on complexity weight
+    const rawAllocated = (weight / totalOriginalWeight) * totalDays;
+    const allocatedDays = Math.max(1, Math.round(rawAllocated));
 
     const secStartDate = addDays(baseDate, currentDayOffset);
-    // End date is secStartDate + allocatedDays - 1 (or at least 1 day)
     const secEndDate = addDays(secStartDate, Math.max(0, allocatedDays - 1));
 
     currentDayOffset += allocatedDays;

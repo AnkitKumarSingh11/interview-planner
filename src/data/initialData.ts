@@ -13,15 +13,15 @@ export const initialTracks: Track[] = [
     targetDays: 90,
     sections: [
       {
-        id: 'dsa-1',
+        id: 'dsa-sec-sorting',
         topic: 'Sorting',
-        sectionTitle: 'Algorithms',
-        startDate: '2026-09-03',
-        endDate: '2026-09-03',
+        startDate: '03 Sep',
+        endDate: '03 Sep',
+        originalWeightDays: 1,
         subsections: [
           {
             id: 'dsa-1-sub-1',
-            title: 'Sorting Algorithms',
+            title: 'Algorithms',
             questions: [
               { id: 'q-dsa-1', title: 'Selection Sort', completed: false, difficulty: 'Easy', url: gfg('selection-sort') },
               { id: 'q-dsa-2', title: 'Bubble Sort', completed: false, difficulty: 'Easy', url: gfg('bubble-sort') },
@@ -33,11 +33,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-2',
+        id: 'dsa-sec-arrays',
         topic: 'Arrays',
-        sectionTitle: 'Fundamentals',
-        startDate: '2026-09-04',
-        endDate: '2026-09-10',
+        startDate: '04 Sep',
+        endDate: '10 Sep',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'dsa-2-sub-1',
@@ -51,15 +51,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-11', title: 'Left Rotate Array by K Places', completed: false, difficulty: 'Medium', url: lc('rotate-array') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-3',
-        topic: 'Arrays',
-        sectionTitle: 'Logic Building',
-        startDate: '2026-09-04',
-        endDate: '2026-09-10',
-        subsections: [
           {
             id: 'dsa-3-sub-1',
             title: 'Logic Building',
@@ -71,18 +62,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-16', title: 'Intersection of two sorted arrays', completed: false, difficulty: 'Medium', url: lc('intersection-of-two-arrays') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-4',
-        topic: 'Arrays',
-        sectionTitle: 'FAQs(Medium)',
-        startDate: '2026-09-04',
-        endDate: '2026-09-10',
-        subsections: [
           {
             id: 'dsa-4-sub-1',
-            title: 'Medium FAQs',
+            title: 'FAQs(Medium)',
             questions: [
               { id: 'q-dsa-17', title: 'Majority Element-I', completed: false, difficulty: 'Medium', url: lc('majority-element') },
               { id: 'q-dsa-18', title: 'Leaders in an Array', completed: false, difficulty: 'Medium', url: gfg('leaders-in-an-array') },
@@ -100,18 +82,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-30', title: 'Next Permutation', completed: false, difficulty: 'Medium', url: lc('next-permutation') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-5',
-        topic: 'Arrays',
-        sectionTitle: 'FAQs(Hard)',
-        startDate: '2026-09-04',
-        endDate: '2026-09-10',
-        subsections: [
           {
             id: 'dsa-5-sub-1',
-            title: 'Hard FAQs',
+            title: 'FAQs(Hard)',
             questions: [
               { id: 'q-dsa-31', title: 'Majority Element-II', completed: false, difficulty: 'Hard', url: lc('majority-element-ii') },
               { id: 'q-dsa-32', title: 'Find the repeating and missing number', completed: false, difficulty: 'Hard', url: gfg('find-a-repeating-and-a-missing-number') },
@@ -124,11 +97,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-6',
+        id: 'dsa-sec-hashing',
         topic: 'Hashing',
-        sectionTitle: 'Theory',
-        startDate: '2026-09-11',
-        endDate: '2026-09-13',
+        startDate: '11 Sep',
+        endDate: '13 Sep',
+        originalWeightDays: 3,
         subsections: [
           {
             id: 'dsa-6-sub-1',
@@ -137,18 +110,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-37', title: 'Basic Hashing', completed: false, difficulty: 'Easy', url: gfg('hashing-data-structure') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-7',
-        topic: 'Hashing',
-        sectionTitle: 'FAQs',
-        startDate: '2026-09-11',
-        endDate: '2026-09-13',
-        subsections: [
           {
             id: 'dsa-7-sub-1',
-            title: 'Hashing FAQs',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-38', title: 'Longest Consecutive Sequence in an Array', completed: false, difficulty: 'Medium', url: lc('longest-consecutive-sequence') },
               { id: 'q-dsa-39', title: 'Longest subarray with sum K', completed: false, difficulty: 'Medium', url: gfg('longest-sub-array-with-sum-k') },
@@ -159,11 +123,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-8',
+        id: 'dsa-sec-bs',
         topic: 'Binary Search',
-        sectionTitle: 'Fundamentals',
-        startDate: '2026-09-14',
-        endDate: '2026-09-20',
+        startDate: '14 Sep',
+        endDate: '20 Sep',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'dsa-8-sub-1',
@@ -174,15 +138,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-44', title: 'Upper Bound', completed: false, difficulty: 'Easy', url: gfg('upper-bound-in-an-array') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-9',
-        topic: 'Binary Search',
-        sectionTitle: 'Logic Building',
-        startDate: '2026-09-14',
-        endDate: '2026-09-20',
-        subsections: [
           {
             id: 'dsa-9-sub-1',
             title: 'Logic Building',
@@ -197,18 +152,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-52', title: 'Single element in sorted array', completed: false, difficulty: 'Medium', url: lc('single-element-in-a-sorted-array') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-10',
-        topic: 'Binary Search',
-        sectionTitle: 'On answers',
-        startDate: '2026-09-14',
-        endDate: '2026-09-20',
-        subsections: [
           {
             id: 'dsa-10-sub-1',
-            title: 'Binary Search on Answers',
+            title: 'On answers',
             questions: [
               { id: 'q-dsa-53', title: 'Find square root of a number', completed: false, difficulty: 'Easy', url: lc('sqrtx') },
               { id: 'q-dsa-54', title: 'Find Nth root of a number', completed: false, difficulty: 'Medium', url: gfg('n-th-root-number-using-binary-search') },
@@ -217,18 +163,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-57', title: 'Minimum days to make M bouquets', completed: false, difficulty: 'Medium', url: lc('minimum-number-of-days-to-make-m-bouquets') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-11',
-        topic: 'Binary Search',
-        sectionTitle: 'FAQs',
-        startDate: '2026-09-14',
-        endDate: '2026-09-20',
-        subsections: [
           {
             id: 'dsa-11-sub-1',
-            title: 'Hard BS Problems',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-58', title: 'Aggressive Cows', completed: false, difficulty: 'Hard', url: gfg('aggressive-cows') },
               { id: 'q-dsa-59', title: 'Book Allocation Problem', completed: false, difficulty: 'Hard', url: gfg('allocate-minimum-number-of-pages') },
@@ -242,50 +179,32 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-12',
+        id: 'dsa-sec-recursion',
         topic: 'Recursion',
-        sectionTitle: 'Implementation Problems',
-        startDate: '2026-09-21',
-        endDate: '2026-09-27',
+        startDate: '21 Sep',
+        endDate: '27 Sep',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'dsa-12-sub-1',
-            title: 'Implementation',
+            title: 'Implementation Problems',
             questions: [
               { id: 'q-dsa-65', title: 'Pow(x,n)', completed: false, difficulty: 'Medium', url: lc('powx-n') },
               { id: 'q-dsa-66', title: 'Generate Parentheses', completed: false, difficulty: 'Medium', url: lc('generate-parentheses') },
               { id: 'q-dsa-67', title: 'Power Set', completed: false, difficulty: 'Medium', url: lc('subsets') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-13',
-        topic: 'Recursion',
-        sectionTitle: 'Subsequence Pattern Problems',
-        startDate: '2026-09-21',
-        endDate: '2026-09-27',
-        subsections: [
           {
             id: 'dsa-13-sub-1',
-            title: 'Subsequences',
+            title: 'Subsequence Pattern Problems',
             questions: [
               { id: 'q-dsa-68', title: 'Check if there exists a subsequence with sum K', completed: false, difficulty: 'Medium', url: gfg('subset-sum-problem-dp-25') },
               { id: 'q-dsa-69', title: 'Count all subsequences with sum K', completed: false, difficulty: 'Medium', url: gfg('count-subsets-with-given-sum') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-14',
-        topic: 'Recursion',
-        sectionTitle: 'FAQs (Medium)',
-        startDate: '2026-09-21',
-        endDate: '2026-09-27',
-        subsections: [
           {
             id: 'dsa-14-sub-1',
-            title: 'Medium Recursion',
+            title: 'FAQs (Medium)',
             questions: [
               { id: 'q-dsa-70', title: 'Combination Sum', completed: false, difficulty: 'Medium', url: lc('combination-sum') },
               { id: 'q-dsa-71', title: 'Combination Sum II', completed: false, difficulty: 'Medium', url: lc('combination-sum-ii') },
@@ -294,15 +213,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-74', title: 'Combination Sum III', completed: false, difficulty: 'Medium', url: lc('combination-sum-iii') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-15',
-        topic: 'Recursion',
-        sectionTitle: 'Hard',
-        startDate: '2026-09-21',
-        endDate: '2026-09-27',
-        subsections: [
           {
             id: 'dsa-15-sub-1',
             title: 'Hard',
@@ -310,18 +220,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-75', title: 'Letter Combinations of a Phone Number', completed: false, difficulty: 'Medium', url: lc('letter-combinations-of-a-phone-number') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-16',
-        topic: 'Recursion',
-        sectionTitle: 'FAQs (Hard)',
-        startDate: '2026-09-21',
-        endDate: '2026-09-27',
-        subsections: [
           {
             id: 'dsa-16-sub-1',
-            title: 'Hard Backtracking',
+            title: 'FAQs (Hard)',
             questions: [
               { id: 'q-dsa-76', title: 'Palindrome partitioning', completed: false, difficulty: 'Hard', url: lc('palindrome-partitioning') },
               { id: 'q-dsa-77', title: 'Word Search', completed: false, difficulty: 'Medium', url: lc('word-search') },
@@ -334,15 +235,15 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-17',
+        id: 'dsa-sec-ll',
         topic: 'Linked-List',
-        sectionTitle: 'Fundamentals (Single LL)',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
+        startDate: '28 Sep',
+        endDate: '05 Oct',
+        originalWeightDays: 8,
         subsections: [
           {
             id: 'dsa-17-sub-1',
-            title: 'Singly LinkedList Basics',
+            title: 'Fundamentals (Single LL)',
             questions: [
               { id: 'q-dsa-82', title: 'Introduction to Singly LinkedList', completed: false, difficulty: 'Easy', url: gfg('singly-linked-list-tutorial') },
               { id: 'q-dsa-83', title: 'Traversal in Linked List', completed: false, difficulty: 'Easy', url: gfg('linked-list-set-1-introduction') },
@@ -358,18 +259,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-93', title: 'Insertion before the value X in Linked List', completed: false, difficulty: 'Easy', url: gfg('insert-node-before-given-node') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-18',
-        topic: 'Linked-List',
-        sectionTitle: 'Fundamentals (Doubly LL)',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
-        subsections: [
           {
             id: 'dsa-18-sub-1',
-            title: 'Doubly LinkedList Basics',
+            title: 'Fundamentals (Doubly LL)',
             questions: [
               { id: 'q-dsa-94', title: 'Introduction to Doubly LL', completed: false, difficulty: 'Easy', url: gfg('doubly-linked-list') },
               { id: 'q-dsa-95', title: 'Deletion in Doubly LL', completed: false, difficulty: 'Easy', url: gfg('delete-a-node-in-a-doubly-linked-list') },
@@ -385,15 +277,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-105', title: 'Insert before given node in Doubly Linked List', completed: false, difficulty: 'Easy', url: gfg('insert-node-before-a-given-node-in-doubly-linked-list') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-19',
-        topic: 'Linked-List',
-        sectionTitle: 'Logic Building',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
-        subsections: [
           {
             id: 'dsa-19-sub-1',
             title: 'Logic Building',
@@ -405,18 +288,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-110', title: 'Reverse a LL', completed: false, difficulty: 'Easy', url: lc('reverse-linked-list') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-20',
-        topic: 'Linked-List',
-        sectionTitle: 'FAQs (Medium)',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
-        subsections: [
           {
             id: 'dsa-20-sub-1',
-            title: 'Medium FAQs',
+            title: 'FAQs (Medium)',
             questions: [
               { id: 'q-dsa-111', title: 'Add one to a number represented by LL', completed: false, difficulty: 'Medium', url: gfg('add-1-to-a-number-represented-as-linked-list') },
               { id: 'q-dsa-112', title: 'Find Middle of Linked List', completed: false, difficulty: 'Easy', url: lc('middle-of-the-linked-list') },
@@ -428,18 +302,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-118', title: 'Length of loop in LL', completed: false, difficulty: 'Easy', url: gfg('find-length-of-loop-in-linked-list') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-21',
-        topic: 'Linked-List',
-        sectionTitle: 'FAQs (Hard)',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
-        subsections: [
           {
             id: 'dsa-21-sub-1',
-            title: 'Hard Linked-List',
+            title: 'FAQs (Hard)',
             questions: [
               { id: 'q-dsa-119', title: 'Reverse LL in group of given size K', completed: false, difficulty: 'Hard', url: lc('reverse-nodes-in-k-group') },
               { id: 'q-dsa-120', title: 'Rotate a LL', completed: false, difficulty: 'Medium', url: lc('rotate-list') },
@@ -449,18 +314,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-124', title: 'Clone a LL with random and next pointer', completed: false, difficulty: 'Hard', url: lc('copy-list-with-random-pointer') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-22',
-        topic: 'Linked-List',
-        sectionTitle: 'FAQS (DLL)',
-        startDate: '2026-09-28',
-        endDate: '2026-10-05',
-        subsections: [
           {
             id: 'dsa-22-sub-1',
-            title: 'Doubly LL FAQs',
+            title: 'FAQS (DLL)',
             questions: [
               { id: 'q-dsa-125', title: 'Delete all occurrences of a key in DLL', completed: false, difficulty: 'Medium', url: gfg('delete-all-occurrences-of-a-given-key-in-a-doubly-linked-list') },
               { id: 'q-dsa-126', title: 'Remove duplicates from sorted DLL', completed: false, difficulty: 'Easy', url: gfg('remove-duplicates-from-a-sorted-doubly-linked-list') },
@@ -469,33 +325,24 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-23',
+        id: 'dsa-sec-greedy',
         topic: 'Greedy Algorithms',
-        sectionTitle: 'Easy',
-        startDate: '2026-10-06',
-        endDate: '2026-10-10',
+        startDate: '06 Oct',
+        endDate: '10 Oct',
+        originalWeightDays: 5,
         subsections: [
           {
             id: 'dsa-23-sub-1',
-            title: 'Easy Greedy',
+            title: 'Easy',
             questions: [
               { id: 'q-dsa-127', title: 'Assign Cookies', completed: false, difficulty: 'Easy', url: lc('assign-cookies') },
               { id: 'q-dsa-128', title: 'Lemonade Change', completed: false, difficulty: 'Easy', url: lc('lemonade-change') },
               { id: 'q-dsa-129', title: 'Jump Game - I', completed: false, difficulty: 'Medium', url: lc('jump-game') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-24',
-        topic: 'Greedy Algorithms',
-        sectionTitle: 'Scheduling and Interval Problems',
-        startDate: '2026-10-06',
-        endDate: '2026-10-10',
-        subsections: [
           {
             id: 'dsa-24-sub-1',
-            title: 'Scheduling',
+            title: 'Scheduling and Interval Problems',
             questions: [
               { id: 'q-dsa-130', title: 'Shortest Job First', completed: false, difficulty: 'Medium', url: gfg('shortest-job-first-or-sjf-cpu-scheduling') },
               { id: 'q-dsa-131', title: 'Job sequencing Problem', completed: false, difficulty: 'Medium', url: gfg('job-sequencing-problem') },
@@ -505,18 +352,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-135', title: 'Minimum number of platforms required for a railway', completed: false, difficulty: 'Medium', url: gfg('minimum-number-of-platforms-required-for-a-railway') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-25',
-        topic: 'Greedy Algorithms',
-        sectionTitle: 'Hard',
-        startDate: '2026-10-06',
-        endDate: '2026-10-10',
-        subsections: [
           {
             id: 'dsa-25-sub-1',
-            title: 'Hard Greedy',
+            title: 'Hard',
             questions: [
               { id: 'q-dsa-136', title: 'Valid Paranthesis Checker', completed: false, difficulty: 'Medium', url: lc('valid-parenthesis-string') },
               { id: 'q-dsa-137', title: 'Candy', completed: false, difficulty: 'Hard', url: lc('candy') },
@@ -525,28 +363,19 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-26',
+        id: 'dsa-sec-sliding',
         topic: 'Sliding Window / 2 Pointer',
-        sectionTitle: 'Pattern and Template',
-        startDate: '2026-10-11',
-        endDate: '2026-10-16',
+        startDate: '11 Oct',
+        endDate: '16 Oct',
+        originalWeightDays: 6,
         subsections: [
           {
             id: 'dsa-26-sub-1',
-            title: 'Pattern & Template',
+            title: 'Pattern and Template',
             questions: [
               { id: 'q-dsa-138', title: 'Theory', completed: false, difficulty: 'Easy', url: gfg('window-sliding-technique') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-27',
-        topic: 'Sliding Window / 2 Pointer',
-        sectionTitle: 'Constant Window',
-        startDate: '2026-10-11',
-        endDate: '2026-10-16',
-        subsections: [
           {
             id: 'dsa-27-sub-1',
             title: 'Constant Window',
@@ -554,18 +383,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-139', title: 'Maximum Points You Can Obtain from Cards', completed: false, difficulty: 'Medium', url: lc('maximum-points-you-can-obtain-from-cards') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-28',
-        topic: 'Sliding Window / 2 Pointer',
-        sectionTitle: 'Longest and Smallest Window Problems',
-        startDate: '2026-10-11',
-        endDate: '2026-10-16',
-        subsections: [
           {
             id: 'dsa-28-sub-1',
-            title: 'Variable Window',
+            title: 'Longest and Smallest Window Problems',
             questions: [
               { id: 'q-dsa-140', title: 'Longest Substring Without Repeating Characters', completed: false, difficulty: 'Medium', url: lc('longest-substring-without-repeating-characters') },
               { id: 'q-dsa-141', title: 'Max Consecutive Ones III', completed: false, difficulty: 'Medium', url: lc('max-consecutive-ones-iii') },
@@ -575,18 +395,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-145', title: 'Minimum Window Substring', completed: false, difficulty: 'Hard', url: lc('minimum-window-substring') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-29',
-        topic: 'Sliding Window / 2 Pointer',
-        sectionTitle: 'Counting Subarrays / Substrings Problems',
-        startDate: '2026-10-11',
-        endDate: '2026-10-16',
-        subsections: [
           {
             id: 'dsa-29-sub-1',
-            title: 'Counting Subarrays',
+            title: 'Counting Subarrays / Substrings Problems',
             questions: [
               { id: 'q-dsa-146', title: 'Number of Substrings Containing All Three Characters', completed: false, difficulty: 'Medium', url: lc('number-of-substrings-containing-all-three-characters') },
               { id: 'q-dsa-147', title: 'Binary Subarrays With Sum', completed: false, difficulty: 'Medium', url: lc('binary-subarrays-with-sum') },
@@ -596,11 +407,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-30',
+        id: 'dsa-sec-stack',
         topic: 'Stack / Queues',
-        sectionTitle: 'Implementation',
-        startDate: '2026-10-17',
-        endDate: '2026-10-21',
+        startDate: '17 Oct',
+        endDate: '21 Oct',
+        originalWeightDays: 5,
         subsections: [
           {
             id: 'dsa-30-sub-1',
@@ -616,15 +427,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-156', title: 'Balanced Paranthesis', completed: false, difficulty: 'Easy', url: lc('valid-parentheses') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-31',
-        topic: 'Stack / Queues',
-        sectionTitle: 'Monotonic Stack',
-        startDate: '2026-10-17',
-        endDate: '2026-10-21',
-        subsections: [
           {
             id: 'dsa-31-sub-1',
             title: 'Monotonic Stack',
@@ -637,18 +439,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-162', title: 'Remove K Digits', completed: false, difficulty: 'Medium', url: lc('remove-k-digits') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-32',
-        topic: 'Stack / Queues',
-        sectionTitle: 'FAQs',
-        startDate: '2026-10-17',
-        endDate: '2026-10-21',
-        subsections: [
           {
             id: 'dsa-32-sub-1',
-            title: 'Stack & Queue FAQs',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-163', title: 'Implement Min Stack', completed: false, difficulty: 'Medium', url: lc('min-stack') },
               { id: 'q-dsa-164', title: 'Sliding Window Maximum', completed: false, difficulty: 'Hard', url: lc('sliding-window-maximum') },
@@ -664,15 +457,15 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-33',
+        id: 'dsa-sec-trees',
         topic: 'Binary Trees',
-        sectionTitle: 'Theory/Traversals',
-        startDate: '2026-10-22',
-        endDate: '2026-10-28',
+        startDate: '22 Oct',
+        endDate: '28 Oct',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'dsa-33-sub-1',
-            title: 'Traversals',
+            title: 'Theory/Traversals',
             questions: [
               { id: 'q-dsa-172', title: 'Introduction', completed: false, difficulty: 'Easy', url: gfg('binary-tree-data-structure') },
               { id: 'q-dsa-173', title: 'Inorder Traversal', completed: false, difficulty: 'Easy', url: lc('binary-tree-inorder-traversal') },
@@ -682,15 +475,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-177', title: 'Pre, Post, Inorder in one traversal', completed: false, difficulty: 'Medium', url: gfg('tree-traversals-inorder-preorder-and-postorder') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-34',
-        topic: 'Binary Trees',
-        sectionTitle: 'Medium Problems',
-        startDate: '2026-10-22',
-        endDate: '2026-10-28',
-        subsections: [
           {
             id: 'dsa-34-sub-1',
             title: 'Medium Problems',
@@ -703,18 +487,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-183', title: 'Check for symmetrical BTs', completed: false, difficulty: 'Easy', url: lc('symmetric-tree') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-35',
-        topic: 'Binary Trees',
-        sectionTitle: 'FAQs',
-        startDate: '2026-10-22',
-        endDate: '2026-10-28',
-        subsections: [
           {
             id: 'dsa-35-sub-1',
-            title: 'Binary Tree Views & Paths',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-184', title: 'Zig Zag or Spiral Traversal', completed: false, difficulty: 'Medium', url: lc('binary-tree-zigzag-level-order-traversal') },
               { id: 'q-dsa-185', title: 'Boundary Traversal', completed: false, difficulty: 'Medium', url: gfg('boundary-traversal-of-binary-tree') },
@@ -730,18 +505,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-195', title: 'Count total nodes in a complete BT', completed: false, difficulty: 'Medium', url: lc('count-complete-tree-nodes') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-36',
-        topic: 'Binary Trees',
-        sectionTitle: 'Construction Problems',
-        startDate: '2026-10-22',
-        endDate: '2026-10-28',
-        subsections: [
           {
             id: 'dsa-36-sub-1',
-            title: 'Tree Construction',
+            title: 'Construction Problems',
             questions: [
               { id: 'q-dsa-196', title: 'Requirements needed to construct a unique BT', completed: false, difficulty: 'Medium', url: gfg('construct-a-unique-tree-from-given-traversals') },
               { id: 'q-dsa-197', title: 'Construct a BT from Preorder and Inorder', completed: false, difficulty: 'Medium', url: lc('construct-binary-tree-from-preorder-and-inorder-traversal') },
@@ -749,18 +515,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-199', title: 'Serialize and De-serialize BT', completed: false, difficulty: 'Hard', url: lc('serialize-and-deserialize-binary-tree') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-37',
-        topic: 'Binary Trees',
-        sectionTitle: 'Traversal in Constant Space',
-        startDate: '2026-10-22',
-        endDate: '2026-10-28',
-        subsections: [
           {
             id: 'dsa-37-sub-1',
-            title: 'Morris Traversal',
+            title: 'Traversal in Constant Space',
             questions: [
               { id: 'q-dsa-200', title: 'Morris Inorder Traversal', completed: false, difficulty: 'Medium', url: gfg('inorder-tree-traversal-without-recursion-and-without-stack') },
               { id: 'q-dsa-201', title: 'Morris Preorder Traversal', completed: false, difficulty: 'Medium', url: gfg('morris-traversal-for-preorder') },
@@ -769,33 +526,24 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-38',
+        id: 'dsa-sec-bst',
         topic: 'Binary Search Trees',
-        sectionTitle: 'Theory and Basics',
-        startDate: '2026-10-29',
-        endDate: '2026-11-02',
+        startDate: '29 Oct',
+        endDate: '02 Nov',
+        originalWeightDays: 5,
         subsections: [
           {
             id: 'dsa-38-sub-1',
-            title: 'BST Basics',
+            title: 'Theory and Basics',
             questions: [
               { id: 'q-dsa-202', title: 'Introduction to BST', completed: false, difficulty: 'Easy', url: gfg('binary-search-tree-data-structure') },
               { id: 'q-dsa-203', title: 'Search in BST', completed: false, difficulty: 'Easy', url: lc('search-in-a-binary-search-tree') },
               { id: 'q-dsa-204', title: 'Floor and Ceil in a BST', completed: false, difficulty: 'Medium', url: gfg('floor-and-ceil-from-a-bst') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-39',
-        topic: 'Binary Search Trees',
-        sectionTitle: 'Medium',
-        startDate: '2026-10-29',
-        endDate: '2026-11-02',
-        subsections: [
           {
             id: 'dsa-39-sub-1',
-            title: 'BST Operations',
+            title: 'Medium',
             questions: [
               { id: 'q-dsa-205', title: 'Insert a given node in BST', completed: false, difficulty: 'Medium', url: lc('insert-into-a-binary-search-tree') },
               { id: 'q-dsa-206', title: 'Delete a node in BST', completed: false, difficulty: 'Medium', url: lc('delete-node-in-a-bst') },
@@ -806,18 +554,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-211', title: 'Inorder successor and predecessor in BST', completed: false, difficulty: 'Medium', url: gfg('inorder-successor-in-binary-search-tree') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-40',
-        topic: 'Binary Search Trees',
-        sectionTitle: 'FAQs',
-        startDate: '2026-10-29',
-        endDate: '2026-11-02',
-        subsections: [
           {
             id: 'dsa-40-sub-1',
-            title: 'BST FAQs',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-212', title: 'BST iterator', completed: false, difficulty: 'Medium', url: lc('binary-search-tree-iterator') },
               { id: 'q-dsa-213', title: 'Two sum in BST', completed: false, difficulty: 'Medium', url: lc('two-sum-iv-input-is-a-bst') },
@@ -828,15 +567,15 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-41',
+        id: 'dsa-sec-heaps',
         topic: 'Heaps',
-        sectionTitle: 'Theory and Implementation',
-        startDate: '2026-11-03',
-        endDate: '2026-11-06',
+        startDate: '03 Nov',
+        endDate: '06 Nov',
+        originalWeightDays: 4,
         subsections: [
           {
             id: 'dsa-41-sub-1',
-            title: 'Heap Basics',
+            title: 'Theory and Implementation',
             questions: [
               { id: 'q-dsa-216', title: 'Heaps (Theory Video)', completed: false, difficulty: 'Easy', url: gfg('heap-data-structure') },
               { id: 'q-dsa-217', title: 'Heapify Algorithm', completed: false, difficulty: 'Medium', url: gfg('building-heap-from-array') },
@@ -849,18 +588,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-224', title: 'K-th Largest element in an array', completed: false, difficulty: 'Medium', url: lc('kth-largest-element-in-an-array') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-42',
-        topic: 'Heaps',
-        sectionTitle: 'FAQs',
-        startDate: '2026-11-03',
-        endDate: '2026-11-06',
-        subsections: [
           {
             id: 'dsa-42-sub-1',
-            title: 'Heap Streaming',
+            title: 'FAQs',
             questions: [
               { id: 'q-dsa-225', title: 'Kth largest element in a stream of running integers', completed: false, difficulty: 'Hard', url: lc('kth-largest-element-in-a-stream') },
             ],
@@ -868,33 +598,24 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-43',
+        id: 'dsa-sec-graphs',
         topic: 'Graphs',
-        sectionTitle: 'Theory and traversals',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
+        startDate: '07 Nov',
+        endDate: '20 Nov',
+        originalWeightDays: 14,
         subsections: [
           {
             id: 'dsa-43-sub-1',
-            title: 'Graph Fundamentals',
+            title: 'Theory and traversals',
             questions: [
               { id: 'q-dsa-226', title: 'Introduction to Graph', completed: false, difficulty: 'Easy', url: gfg('graph-data-structure-and-algorithms') },
               { id: 'q-dsa-227', title: 'Traversal Techniques (BFS & DFS)', completed: false, difficulty: 'Easy', url: gfg('breadth-first-search-or-bfs-for-a-graph') },
               { id: 'q-dsa-228', title: 'Connected Components', completed: false, difficulty: 'Easy', url: gfg('connected-components-in-an-undirected-graph') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-44',
-        topic: 'Graphs',
-        sectionTitle: 'Traversal Problems',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-44-sub-1',
-            title: 'Traversal Applications',
+            title: 'Traversal Problems',
             questions: [
               { id: 'q-dsa-229', title: 'Number of provinces', completed: false, difficulty: 'Medium', url: lc('number-of-provinces') },
               { id: 'q-dsa-230', title: 'Number of islands', completed: false, difficulty: 'Medium', url: lc('number-of-islands') },
@@ -906,18 +627,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-236', title: 'Number of distinct islands', completed: false, difficulty: 'Medium', url: gfg('number-of-distinct-islands') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-45',
-        topic: 'Graphs',
-        sectionTitle: 'Cycles',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-45-sub-1',
-            title: 'Cycle Detection & Topo Sort',
+            title: 'Cycles',
             questions: [
               { id: 'q-dsa-237', title: 'Detect a cycle in an undirected graph', completed: false, difficulty: 'Medium', url: gfg('detect-cycle-in-an-undirected-graph') },
               { id: 'q-dsa-238', title: 'Bipartite graph', completed: false, difficulty: 'Medium', url: lc('is-graph-bipartite') },
@@ -925,18 +637,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-240', title: 'Detect a cycle in a directed graph', completed: false, difficulty: 'Medium', url: gfg('detect-cycle-in-a-graph') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-46',
-        topic: 'Graphs',
-        sectionTitle: 'Hard Problems',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-46-sub-1',
-            title: 'Hard Graph Problems',
+            title: 'Hard Problems',
             questions: [
               { id: 'q-dsa-241', title: 'Find eventual safe states', completed: false, difficulty: 'Medium', url: lc('find-eventual-safe-states') },
               { id: 'q-dsa-242', title: 'Course Schedule I', completed: false, difficulty: 'Medium', url: lc('course-schedule') },
@@ -948,18 +651,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-248', title: 'Word ladder II', completed: false, difficulty: 'Hard', url: lc('word-ladder-ii') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-47',
-        topic: 'Graphs',
-        sectionTitle: 'Shortest Path Algorithms',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-47-sub-1',
-            title: 'Shortest Path',
+            title: 'Shortest Path Algorithms',
             questions: [
               { id: 'q-dsa-249', title: "Dijkstra's algorithm", completed: false, difficulty: 'Medium', url: gfg('dijkstras-shortest-path-algorithm-greedy-algo-7') },
               { id: 'q-dsa-250', title: 'Print Shortest Path', completed: false, difficulty: 'Medium', url: gfg('printing-paths-in-dijkstras-shortest-path-algorithm') },
@@ -973,36 +667,18 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-258', title: 'Find the city with the smallest number of neighbors', completed: false, difficulty: 'Medium', url: lc('find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-48',
-        topic: 'Graphs',
-        sectionTitle: 'Minimum Spanning Tree',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-48-sub-1',
-            title: 'MST & Disjoint Set',
+            title: 'Minimum Spanning Tree',
             questions: [
               { id: 'q-dsa-259', title: 'MST theory (Prim & Kruskal)', completed: false, difficulty: 'Medium', url: gfg('prims-minimum-spanning-tree-mst-greedy-algo-5') },
               { id: 'q-dsa-260', title: 'Disjoint Set (Union Find)', completed: false, difficulty: 'Medium', url: gfg('disjoint-set-data-structure') },
               { id: 'q-dsa-261', title: 'Find the MST weight', completed: false, difficulty: 'Medium', url: lc('min-cost-to-connect-all-points') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-49',
-        topic: 'Graphs',
-        sectionTitle: 'Hard Problems II',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-49-sub-1',
-            title: 'Disjoint Set Applications',
+            title: 'Hard Problems II',
             questions: [
               { id: 'q-dsa-262', title: 'Number of operations to make network connected', completed: false, difficulty: 'Medium', url: lc('number-of-operations-to-make-network-connected') },
               { id: 'q-dsa-263', title: 'Accounts merge', completed: false, difficulty: 'Medium', url: lc('accounts-merge') },
@@ -1011,18 +687,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-266', title: 'Most stones removed with same row or column', completed: false, difficulty: 'Medium', url: lc('most-stones-removed-with-same-row-or-column') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-50',
-        topic: 'Graphs',
-        sectionTitle: 'Additional Algorithms',
-        startDate: '2026-11-07',
-        endDate: '2026-11-20',
-        subsections: [
           {
             id: 'dsa-50-sub-1',
-            title: 'Advanced Graph Theory',
+            title: 'Additional Algorithms',
             questions: [
               { id: 'q-dsa-267', title: "Kosaraju's algorithm (Strongly Connected Components)", completed: false, difficulty: 'Hard', url: gfg('strongly-connected-components') },
               { id: 'q-dsa-268', title: 'Bridges in graph (Tarjan)', completed: false, difficulty: 'Hard', url: lc('critical-connections-in-a-network') },
@@ -1032,11 +699,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'dsa-51',
+        id: 'dsa-sec-dp',
         topic: 'Dynamic Programming',
-        sectionTitle: 'Introduction',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
+        startDate: '21 Nov',
+        endDate: '01 Dec',
+        originalWeightDays: 11,
         subsections: [
           {
             id: 'dsa-51-sub-1',
@@ -1045,15 +712,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-270', title: 'Introduction to DP (Memoization & Tabulation)', completed: false, difficulty: 'Easy', url: gfg('dynamic-programming') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-52',
-        topic: 'Dynamic Programming',
-        sectionTitle: '1D DP',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-52-sub-1',
             title: '1D DP',
@@ -1065,15 +723,6 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-275', title: 'House robber', completed: false, difficulty: 'Medium', url: lc('house-robber-ii') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-53',
-        topic: 'Dynamic Programming',
-        sectionTitle: '2D DP',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-53-sub-1',
             title: '2D DP',
@@ -1081,18 +730,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-276', title: "Ninja's training", completed: false, difficulty: 'Medium', url: gfg('ninjas-training') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-54',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'DP on grids',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-54-sub-1',
-            title: 'Grid DP',
+            title: 'DP on grids',
             questions: [
               { id: 'q-dsa-277', title: 'Grid unique paths', completed: false, difficulty: 'Medium', url: lc('unique-paths') },
               { id: 'q-dsa-278', title: 'Unique paths II', completed: false, difficulty: 'Medium', url: lc('unique-paths-ii') },
@@ -1101,18 +741,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-281', title: 'Cherry pickup II', completed: false, difficulty: 'Hard', url: lc('cherry-pickup-ii') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-55',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'DP on stocks',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-55-sub-1',
-            title: 'Stock DP',
+            title: 'DP on stocks',
             questions: [
               { id: 'q-dsa-282', title: 'Best time to buy and sell stock', completed: false, difficulty: 'Easy', url: lc('best-time-to-buy-and-sell-stock') },
               { id: 'q-dsa-283', title: 'Best time to buy and sell stock II', completed: false, difficulty: 'Medium', url: lc('best-time-to-buy-and-sell-stock-ii') },
@@ -1121,18 +752,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-286', title: 'Best time to buy and sell stock with transaction fees', completed: false, difficulty: 'Medium', url: lc('best-time-to-buy-and-sell-stock-with-transaction-fee') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-56',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'DP on subsequences',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-56-sub-1',
-            title: 'Knapsack & Subsequences',
+            title: 'DP on subsequences',
             questions: [
               { id: 'q-dsa-287', title: 'Subset sum equals to target', completed: false, difficulty: 'Medium', url: gfg('subset-sum-problem-dp-25') },
               { id: 'q-dsa-288', title: 'Partition equal subset sum', completed: false, difficulty: 'Medium', url: lc('partition-equal-subset-sum') },
@@ -1147,18 +769,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-297', title: 'Rod cutting problem', completed: false, difficulty: 'Medium', url: gfg('cutting-a-rod-dp-13') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-57',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'LIS',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-57-sub-1',
-            title: 'Longest Increasing Subsequence',
+            title: 'LIS',
             questions: [
               { id: 'q-dsa-298', title: 'Longest Increasing Subsequence', completed: false, difficulty: 'Medium', url: lc('longest-increasing-subsequence') },
               { id: 'q-dsa-299', title: 'Print Longest Increasing Subsequence', completed: false, difficulty: 'Medium', url: gfg('printing-longest-increasing-subsequence') },
@@ -1168,18 +781,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-303', title: 'Number of Longest Increasing Subsequences', completed: false, difficulty: 'Medium', url: lc('number-of-longest-increasing-subsequence') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-58',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'DP on strings',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-58-sub-1',
-            title: 'String DP',
+            title: 'DP on strings',
             questions: [
               { id: 'q-dsa-304', title: 'Longest common subsequence', completed: false, difficulty: 'Medium', url: lc('longest-common-subsequence') },
               { id: 'q-dsa-305', title: 'Longest common substring', completed: false, difficulty: 'Medium', url: gfg('longest-common-substring-dp-29') },
@@ -1192,18 +796,9 @@ export const initialTracks: Track[] = [
               { id: 'q-dsa-312', title: 'Wildcard matching', completed: false, difficulty: 'Hard', url: lc('wildcard-matching') },
             ],
           },
-        ],
-      },
-      {
-        id: 'dsa-59',
-        topic: 'Dynamic Programming',
-        sectionTitle: 'MCM DP',
-        startDate: '2026-11-21',
-        endDate: '2026-12-01',
-        subsections: [
           {
             id: 'dsa-59-sub-1',
-            title: 'Matrix Chain Multiplication',
+            title: 'MCM DP',
             questions: [
               { id: 'q-dsa-313', title: 'Matrix chain multiplication', completed: false, difficulty: 'Hard', url: gfg('matrix-chain-multiplication-dp-8') },
               { id: 'q-dsa-314', title: 'Minimum cost to cut the stick', completed: false, difficulty: 'Hard', url: lc('minimum-cost-to-cut-a-stick') },
@@ -1223,10 +818,11 @@ export const initialTracks: Track[] = [
     targetDays: 90,
     sections: [
       {
-        id: 'lld-1',
-        sectionTitle: 'Introduction to LLD',
-        startDate: '2026-09-04',
-        endDate: '2026-09-07',
+        id: 'lld-sec-intro',
+        topic: 'Introduction to LLD',
+        startDate: '04 Sep',
+        endDate: '07 Sep',
+        originalWeightDays: 4,
         subsections: [
           {
             id: 'lld-1-sub-1',
@@ -1239,10 +835,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-2',
-        sectionTitle: 'Solid Principles',
-        startDate: '2026-09-08',
-        endDate: '2026-09-13',
+        id: 'lld-sec-solid',
+        topic: 'Solid Principles',
+        startDate: '08 Sep',
+        endDate: '13 Sep',
+        originalWeightDays: 6,
         subsections: [
           {
             id: 'lld-2-sub-1',
@@ -1258,10 +855,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-3',
-        sectionTitle: 'UML',
-        startDate: '2026-09-14',
-        endDate: '2026-09-16',
+        id: 'lld-sec-uml',
+        topic: 'UML',
+        startDate: '14 Sep',
+        endDate: '16 Sep',
+        originalWeightDays: 3,
         subsections: [
           {
             id: 'lld-3-sub-1',
@@ -1274,10 +872,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-4',
-        sectionTitle: 'Creational Design Patterns',
-        startDate: '2026-09-17',
-        endDate: '2026-09-23',
+        id: 'lld-sec-creational',
+        topic: 'Creational Design Patterns',
+        startDate: '17 Sep',
+        endDate: '23 Sep',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'lld-4-sub-1',
@@ -1294,10 +893,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-5',
-        sectionTitle: 'Structural Design Patterns',
-        startDate: '2026-09-24',
-        endDate: '2026-10-08',
+        id: 'lld-sec-structural',
+        topic: 'Structural Design Patterns',
+        startDate: '24 Sep',
+        endDate: '08 Oct',
+        originalWeightDays: 15,
         subsections: [
           {
             id: 'lld-5-sub-1',
@@ -1315,10 +915,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-6',
-        sectionTitle: 'Behavioural Design Patterns',
-        startDate: '2026-10-09',
-        endDate: '2026-10-18',
+        id: 'lld-sec-behavioural',
+        topic: 'Behavioural Design Patterns',
+        startDate: '09 Oct',
+        endDate: '18 Oct',
+        originalWeightDays: 10,
         subsections: [
           {
             id: 'lld-6-sub-1',
@@ -1339,10 +940,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-7',
-        sectionTitle: 'Multithreading and Concurrency',
-        startDate: '2026-10-19',
-        endDate: '2026-10-23',
+        id: 'lld-sec-concurrency',
+        topic: 'Multithreading and Concurrency',
+        startDate: '19 Oct',
+        endDate: '23 Oct',
+        originalWeightDays: 5,
         subsections: [
           {
             id: 'lld-7-sub-1',
@@ -1360,10 +962,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-8',
-        sectionTitle: 'Dependency Injection',
-        startDate: '2026-10-24',
-        endDate: '2026-10-26',
+        id: 'lld-sec-di',
+        topic: 'Dependency Injection',
+        startDate: '24 Oct',
+        endDate: '26 Oct',
+        originalWeightDays: 3,
         subsections: [
           {
             id: 'lld-8-sub-1',
@@ -1375,10 +978,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-9',
-        sectionTitle: 'Exceptions and Error Handling',
-        startDate: '2026-10-27',
-        endDate: '2026-10-30',
+        id: 'lld-sec-exceptions',
+        topic: 'Exceptions and Error Handling',
+        startDate: '27 Oct',
+        endDate: '30 Oct',
+        originalWeightDays: 4,
         subsections: [
           {
             id: 'lld-9-sub-1',
@@ -1391,10 +995,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-10',
-        sectionTitle: 'Best practices in LLD',
-        startDate: '2026-10-31',
-        endDate: '2026-11-06',
+        id: 'lld-sec-bestpractices',
+        topic: 'Best practices in LLD',
+        startDate: '31 Oct',
+        endDate: '06 Nov',
+        originalWeightDays: 7,
         subsections: [
           {
             id: 'lld-10-sub-1',
@@ -1408,10 +1013,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-11',
-        sectionTitle: 'Interview Problems (Part-1)',
-        startDate: '2026-11-07',
-        endDate: '2026-11-16',
+        id: 'lld-sec-problems1',
+        topic: 'Interview Problems (Part-1)',
+        startDate: '07 Nov',
+        endDate: '16 Nov',
+        originalWeightDays: 10,
         subsections: [
           {
             id: 'lld-11-sub-1',
@@ -1432,10 +1038,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-12',
-        sectionTitle: 'Interview Problems (Part-2)',
-        startDate: '2026-11-17',
-        endDate: '2026-11-22',
+        id: 'lld-sec-problems2',
+        topic: 'Interview Problems (Part-2)',
+        startDate: '17 Nov',
+        endDate: '22 Nov',
+        originalWeightDays: 6,
         subsections: [
           {
             id: 'lld-12-sub-1',
@@ -1452,10 +1059,11 @@ export const initialTracks: Track[] = [
         ],
       },
       {
-        id: 'lld-13',
-        sectionTitle: 'Interview Problems (Part-3)',
-        startDate: '2026-11-23',
-        endDate: '2026-12-02',
+        id: 'lld-sec-problems3',
+        topic: 'Interview Problems (Part-3)',
+        startDate: '23 Nov',
+        endDate: '02 Dec',
+        originalWeightDays: 10,
         subsections: [
           {
             id: 'lld-13-sub-1',

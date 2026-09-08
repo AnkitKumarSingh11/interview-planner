@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Track, Difficulty } from '@/types/tracker';
-import { Plus, X, Link as LinkIcon, FileText, HelpCircle } from 'lucide-react';
+import { Plus, X, Link as LinkIcon, FileText, FolderKanban, Layers } from 'lucide-react';
 
 interface AddQuestionModalProps {
   track: Track;
@@ -30,33 +30,34 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   onClose,
   onAddQuestion,
 }) => {
-  const [selectedSectionId, setSelectedSectionId] = useState(
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(
     defaultSectionId || track.sections[0]?.id || ''
   );
-  const [selectedSubsectionTitle, setSelectedSubsectionTitle] = useState('');
-  const [customSubsectionTitle, setCustomSubsectionTitle] = useState('');
-  const [isNewSubsection, setIsNewSubsection] = useState(false);
-  const [title, setTitle] = useState('');
+  const [selectedSubsectionTitle, setSelectedSubsectionTitle] = useState<string>('');
+  const [customSubsectionTitle, setCustomSubsectionTitle] = useState<string>('');
+  const [isNewSubsection, setIsNewSubsection] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>('');
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
-  const [url, setUrl] = useState('');
-  const [notes, setNotes] = useState('');
+  const [url, setUrl] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
 
-  // Update selected section when default changes or track changes
+  // 1. Update selected parent section when prop or track changes
   useEffect(() => {
     if (defaultSectionId) {
       setSelectedSectionId(defaultSectionId);
-    } else if (track.sections[0]) {
+    } else if (track.sections.length > 0) {
       setSelectedSectionId(track.sections[0].id);
     }
-  }, [defaultSectionId, track]);
+  }, [defaultSectionId, track, isOpen]);
 
-  // Find currently selected section
-  const currentSection = track.sections.find((s) => s.id === selectedSectionId);
+  // Currently selected parent section object
+  const currentParentSection = track.sections.find((s) => s.id === selectedSectionId);
 
+  // 2. Populate dependent sub-section dropdown when selectedParentSection changes
   useEffect(() => {
-    if (currentSection && currentSection.subsections.length > 0) {
+    if (currentParentSection && currentParentSection.subsections.length > 0) {
       if (defaultSubsectionId) {
-        const matchingSub = currentSection.subsections.find(
+        const matchingSub = currentParentSection.subsections.find(
           (sub) => sub.id === defaultSubsectionId
         );
         if (matchingSub) {
@@ -65,13 +66,13 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
           return;
         }
       }
-      setSelectedSubsectionTitle(currentSection.subsections[0].title);
+      setSelectedSubsectionTitle(currentParentSection.subsections[0].title);
       setIsNewSubsection(false);
     } else {
       setIsNewSubsection(true);
       setCustomSubsectionTitle('General Questions');
     }
-  }, [selectedSectionId, currentSection, defaultSubsectionId]);
+  }, [selectedSectionId, currentParentSection, defaultSubsectionId]);
 
   if (!isOpen) return null;
 
@@ -90,7 +91,6 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
       notes: notes.trim() || undefined,
     });
 
-    // Reset fields & close
     setTitle('');
     setUrl('');
     setNotes('');
@@ -109,7 +109,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Add New Question</h3>
-              <p className="text-xs text-slate-400">Add a problem under any section or subsection</p>
+              <p className="text-xs text-slate-400">Select parent topic to populate sub-sections</p>
             </div>
           </div>
           <button
@@ -138,54 +138,38 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             />
           </div>
 
-          {/* Target Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Target Section *
-              </label>
-              <select
-                value={selectedSectionId}
-                onChange={(e) => setSelectedSectionId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-all"
-              >
-                {track.sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.topic ? `${s.topic} - ${s.sectionTitle}` : s.sectionTitle}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Difficulty */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Difficulty
-              </label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-all"
-              >
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-              </select>
-            </div>
+          {/* 1st Dropdown: Parent Main Topic */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <FolderKanban className="w-3.5 h-3.5" />
+              1. Parent Topic *
+            </label>
+            <select
+              value={selectedSectionId}
+              onChange={(e) => setSelectedSectionId(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-slate-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-all"
+            >
+              {track.sections.map((sec) => (
+                <option key={sec.id} value={sec.id}>
+                  {sec.topic} ({sec.subsections.length} sub-sections)
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Sub-section Choice */}
-          <div className="space-y-1.5">
+          {/* 2nd Dependent Dropdown: Sub-section under selected parent topic */}
+          <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                Sub-section
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                2. Sub-section (Under "{currentParentSection?.topic || 'Selected Topic'}") *
               </label>
               <button
                 type="button"
                 onClick={() => setIsNewSubsection(!isNewSubsection)}
                 className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
               >
-                {isNewSubsection ? 'Choose Existing' : '+ Create New Sub-section'}
+                {isNewSubsection ? 'Choose Existing Sub-section' : '+ New Sub-section'}
               </button>
             </div>
 
@@ -195,21 +179,48 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                 value={customSubsectionTitle}
                 onChange={(e) => setCustomSubsectionTitle(e.target.value)}
                 placeholder="Enter new sub-section title..."
-                className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-all"
               />
             ) : (
               <select
                 value={selectedSubsectionTitle}
                 onChange={(e) => setSelectedSubsectionTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-all"
               >
-                {currentSection?.subsections.map((sub) => (
+                {currentParentSection?.subsections.map((sub) => (
                   <option key={sub.id} value={sub.title}>
-                    {sub.title}
+                    {sub.title} ({sub.questions.length} questions)
                   </option>
                 ))}
               </select>
             )}
+          </div>
+
+          {/* Difficulty */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Difficulty
+            </label>
+            <div className="flex items-center gap-2">
+              {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map((diff) => (
+                <button
+                  key={diff}
+                  type="button"
+                  onClick={() => setDifficulty(diff)}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                    difficulty === diff
+                      ? diff === 'Easy'
+                        ? 'bg-emerald-600 text-white border-emerald-500'
+                        : diff === 'Medium'
+                        ? 'bg-amber-600 text-white border-amber-500'
+                        : 'bg-rose-600 text-white border-rose-500'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  {diff}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Problem URL Link */}
@@ -237,8 +248,8 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Initial thoughts, key takeaways, approach..."
-              rows={3}
-              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all resize-none"
+              rows={2}
+              className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-all resize-none"
             />
           </div>
 

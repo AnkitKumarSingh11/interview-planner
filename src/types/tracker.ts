@@ -18,10 +18,11 @@ export interface Subsection {
 
 export interface Section {
   id: string;
-  topic?: string;
-  sectionTitle: string;
-  startDate: string; // Formatted 'YYYY-MM-DD' or '04 Sep'
-  endDate: string;   // Formatted 'YYYY-MM-DD' or '07 Sep'
+  topic: string;              // Main topic title e.g. "Arrays", "Graphs", "Solid Principles"
+  sectionTitle?: string;       // Sub-heading or details
+  startDate: string;          // e.g. "04 Sep"
+  endDate: string;            // e.g. "10 Sep"
+  originalWeightDays: number; // Document complexity weight in days (out of 90)
   subsections: Subsection[];
 }
 
@@ -29,7 +30,7 @@ export interface Track {
   id: string;
   title: string;
   description: string;
-  roadmapStartDate?: string; // e.g. '2026-09-08'
+  roadmapStartDate?: string; // e.g. '2026-09-03'
   targetDays?: number;      // e.g. 30, 60, 90, 160
   sections: Section[];
 }
