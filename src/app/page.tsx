@@ -10,6 +10,7 @@ import {
   FilterStatus, 
   FilterDifficulty 
 } from '@/types/tracker';
+import { recalculateTrackTimeline } from '@/utils/timeline';
 import { Header } from '@/components/Header';
 import { TimelineHeader } from '@/components/TimelineHeader';
 import { SectionCard } from '@/components/SectionCard';
@@ -17,9 +18,9 @@ import { EditTimelineModal } from '@/components/EditTimelineModal';
 import { AddQuestionModal } from '@/components/AddQuestionModal';
 import { AddSectionModal } from '@/components/AddSectionModal';
 import { AddTrackModal } from '@/components/AddTrackModal';
-import { BookOpen, Sparkles, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
-const STORAGE_KEY = 'planly_interview_tracker_v1';
+const STORAGE_KEY = 'planly_interview_tracker_v2';
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>(initialTracks);
@@ -67,6 +68,26 @@ export default function Home() {
   // Current active track
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
+  // Handler: Apply Roadmap Target Days Timeline across all sections
+  const handleApplyRoadmapTimeline = (targetDays: number, startDateStr: string) => {
+    setTracks((prevTracks) =>
+      prevTracks.map((track) => {
+        if (track.id !== activeTrackId) return track;
+        const recalculatedSections = recalculateTrackTimeline(
+          track.sections,
+          startDateStr,
+          targetDays
+        );
+        return {
+          ...track,
+          targetDays,
+          roadmapStartDate: startDateStr,
+          sections: recalculatedSections,
+        };
+      })
+    );
+  };
+
   // Handler: Toggle Question Completion
   const handleToggleQuestion = (questionId: string) => {
     setTracks((prevTracks) =>
@@ -107,7 +128,7 @@ export default function Home() {
     );
   };
 
-  // Handler: Update Question metadata (notes, URL, etc.)
+  // Handler: Update Question metadata
   const handleUpdateQuestion = (questionId: string, updates: Partial<Question>) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
@@ -172,7 +193,6 @@ export default function Home() {
           sections: track.sections.map((sec) => {
             if (sec.id !== sectionId) return sec;
             
-            // Check if subsection title already exists
             const existingSubIndex = sec.subsections.findIndex(
               (sub) => sub.title.toLowerCase() === subsectionTitle.toLowerCase()
             );
@@ -185,7 +205,6 @@ export default function Home() {
               };
               return { ...sec, subsections: updatedSubs };
             } else {
-              // Create new subsection
               const newSub = {
                 id: `sub-custom-${Date.now()}`,
                 title: subsectionTitle,
@@ -252,6 +271,8 @@ export default function Home() {
       id: newTrackId,
       title,
       description,
+      targetDays: 60,
+      roadmapStartDate: new Date().toISOString().slice(0, 10),
       sections: [
         {
           id: `sec-${Date.now()}`,
@@ -314,18 +335,15 @@ export default function Home() {
   const filteredSections = activeTrack ? activeTrack.sections.map((section) => {
     const searchLower = searchQuery.toLowerCase();
 
-    // Check if section matches search
     const sectionMatches =
       (section.topic && section.topic.toLowerCase().includes(searchLower)) ||
       section.sectionTitle.toLowerCase().includes(searchLower);
 
     const filteredSubsections = section.subsections.map((sub) => {
       const filteredQuestions = sub.questions.filter((q) => {
-        // Search filter
         const matchesSearch =
           sectionMatches || q.title.toLowerCase().includes(searchLower);
 
-        // Status filter
         const matchesStatus =
           filterStatus === 'all'
             ? true
@@ -333,7 +351,6 @@ export default function Home() {
             ? q.completed
             : !q.completed;
 
-        // Difficulty filter
         const matchesDifficulty =
           filterDifficulty === 'all' ? true : q.difficulty === filterDifficulty;
 
@@ -387,6 +404,7 @@ export default function Home() {
             onFilterStatusChange={setFilterStatus}
             filterDifficulty={filterDifficulty}
             onFilterDifficultyChange={setFilterDifficulty}
+            onApplyRoadmapTimeline={handleApplyRoadmapTimeline}
           />
         )}
 

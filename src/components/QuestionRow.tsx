@@ -6,9 +6,7 @@ import {
   Check, 
   ExternalLink, 
   FileText, 
-  Trash2, 
-  Edit3, 
-  Sparkles 
+  Trash2 
 } from 'lucide-react';
 
 interface QuestionRowProps {
@@ -33,6 +31,10 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
     Hard: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
   };
 
+  const problemUrl =
+    question.url ||
+    `https://leetcode.com/problemset/all/?search=${encodeURIComponent(question.title)}`;
+
   const handleSaveNotes = () => {
     onUpdateQuestion(question.id, { notes });
     setShowNotesModal(false);
@@ -55,20 +57,27 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
               ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
               : 'border-slate-600 hover:border-indigo-400 bg-slate-800'
           }`}
+          title={question.completed ? "Mark incomplete" : "Mark completed"}
         >
           {question.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
         </button>
 
-        {/* Question Title & Custom badge */}
+        {/* Question Title & Link */}
         <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
-          <span
-            onClick={() => onToggleComplete(question.id)}
-            className={`text-sm font-medium cursor-pointer transition-all ${
-              question.completed ? 'line-through text-slate-500' : 'text-slate-200 hover:text-white'
+          <a
+            href={problemUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open question in new tab"
+            className={`text-sm font-medium transition-all hover:underline flex items-center gap-1.5 ${
+              question.completed
+                ? 'line-through text-slate-500 hover:text-slate-300'
+                : 'text-slate-200 hover:text-indigo-400'
             }`}
           >
-            {question.title}
-          </span>
+            <span>{question.title}</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-60 group-hover:opacity-100 shrink-0 inline-block" />
+          </a>
 
           {question.custom && (
             <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">
@@ -78,7 +87,7 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
         </div>
       </div>
 
-      {/* Right Controls: Difficulty badge, Notes, URL, Delete */}
+      {/* Right Controls: Difficulty badge, Notes, Delete */}
       <div className="flex items-center gap-2 shrink-0 ml-3">
         {/* Difficulty Badge */}
         <span
@@ -89,18 +98,16 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
           {question.difficulty}
         </span>
 
-        {/* External Link */}
-        {question.url && (
-          <a
-            href={question.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open question link"
-            className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        )}
+        {/* External Link Direct Icon */}
+        <a
+          href={problemUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open problem link in new tab"
+          className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-colors"
+        >
+          <ExternalLink className="w-4 h-4" />
+        </a>
 
         {/* Notes Button */}
         <button

@@ -20,8 +20,8 @@ export interface Section {
   id: string;
   topic?: string;
   sectionTitle: string;
-  startDate: string; // ISO date 'YYYY-MM-DD' or formatted '04 Sep'
-  endDate: string;   // ISO date 'YYYY-MM-DD' or formatted '07 Sep'
+  startDate: string; // Formatted 'YYYY-MM-DD' or '04 Sep'
+  endDate: string;   // Formatted 'YYYY-MM-DD' or '07 Sep'
   subsections: Subsection[];
 }
 
@@ -29,6 +29,8 @@ export interface Track {
   id: string;
   title: string;
   description: string;
+  roadmapStartDate?: string; // e.g. '2026-09-08'
+  targetDays?: number;      // e.g. 30, 60, 90, 160
   sections: Section[];
 }
 
