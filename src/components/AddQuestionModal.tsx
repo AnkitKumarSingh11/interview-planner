@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Track, Difficulty } from '@/types/tracker';
-import { Plus, X, Link as LinkIcon, FileText, FolderKanban, Layers } from 'lucide-react';
+import { Plus, X, Link as LinkIcon, FileText, FolderKanban, Layers, ShieldCheck } from 'lucide-react';
 
 interface AddQuestionModalProps {
   track: Track;
@@ -41,7 +41,6 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   const [url, setUrl] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
-  // 1. Update selected parent section when prop or track changes
   useEffect(() => {
     if (defaultSectionId) {
       setSelectedSectionId(defaultSectionId);
@@ -50,10 +49,8 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
     }
   }, [defaultSectionId, track, isOpen]);
 
-  // Currently selected parent section object
   const currentParentSection = track.sections.find((s) => s.id === selectedSectionId);
 
-  // 2. Populate dependent sub-section dropdown when selectedParentSection changes
   useEffect(() => {
     if (currentParentSection && currentParentSection.subsections.length > 0) {
       if (defaultSubsectionId) {
@@ -108,8 +105,8 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               <Plus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Add New Question</h3>
-              <p className="text-xs text-slate-400">Select parent topic to populate sub-sections</p>
+              <h3 className="text-base font-bold text-white">Submit New Question</h3>
+              <p className="text-xs text-slate-400">Questions go through admin approval before publishing</p>
             </div>
           </div>
           <button
@@ -118,6 +115,14 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Admin Approval Notice Banner */}
+        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-300 text-xs">
+          <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <span>
+            Submissions require admin approval. Once reviewed by an administrator, your question will appear live in the official syllabus!
+          </span>
         </div>
 
         {/* Form */}
@@ -157,7 +162,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             </select>
           </div>
 
-          {/* 2nd Dependent Dropdown: Sub-section under selected parent topic */}
+          {/* 2nd Dependent Dropdown: Sub-section */}
           <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -267,7 +272,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition-all"
             >
               <Plus className="w-4 h-4" />
-              Add Question
+              Submit Question for Review
             </button>
           </div>
         </form>

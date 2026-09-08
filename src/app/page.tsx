@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { initialTracks } from '@/data/initialData';
 import { 
   Track, 
   Section, 
@@ -18,14 +17,17 @@ import { EditTimelineModal } from '@/components/EditTimelineModal';
 import { AddQuestionModal } from '@/components/AddQuestionModal';
 import { AddSectionModal } from '@/components/AddSectionModal';
 import { AddTrackModal } from '@/components/AddTrackModal';
+import { AdminApprovalModal } from '@/components/AdminApprovalModal';
 import { AlertCircle } from 'lucide-react';
 
-const STORAGE_KEY = 'planly_interview_tracker_v3';
-
 export default function Home() {
-  const [tracks, setTracks] = useState<Track[]>(initialTracks);
+  const [tracks, setTracks] = useState<Track[]>([]);
   const [activeTrackId, setActiveTrackId] = useState<string>('dsa');
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Admin Pending Queue
+  const [pendingQuestions, setPendingQuestions] = useState<any[]>([]);
+  const [isAdminApprovalOpen, setIsAdminApprovalOpen] = useState(false);
 
   // Filters & Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,44 +42,57 @@ export default function Home() {
   const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
   const [isAddTrackOpen, setIsAddTrackOpen] = useState(false);
 
-  // Load state from LocalStorage on initial client mount
-  useEffect(() => {
+  // Fetch Tracks & Pending Questions from SQLite API
+  const fetchTracksData = async () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTracks(parsed);
-          setActiveTrackId(parsed[0].id);
+      const res = await fetch('/api/tracks');
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setTracks(data);
+        if (!activeTrackId || !data.some(t => t.id === activeTrackId)) {
+          setActiveTrackId(data[0].id);
         }
       }
     } catch (e) {
-      console.error('Failed to load saved state from localStorage:', e);
+      console.error('Failed to load tracks from SQLite database API:', e);
     } finally {
       setIsLoaded(true);
     }
-  }, []);
+  };
 
-  // Save state to LocalStorage on change
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
+  const fetchPendingQueue = async () => {
+    try {
+      const res = await fetch('/api/admin/pending');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPendingQuestions(data);
+      }
+    } catch (e) {
+      console.error('Failed to load pending queue:', e);
     }
-  }, [tracks, isLoaded]);
+  };
+
+  useEffect(() => {
+    fetchTracksData();
+    fetchPendingQueue();
+  }, []);
 
   // Current active track
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
-  // Handler: Apply Roadmap Target Days Timeline across all sections using document complexity weights
-  const handleApplyRoadmapTimeline = (targetDays: number, startDateStr: string) => {
+  // Handler: Apply Roadmap Target Days Timeline across all sections
+  const handleApplyRoadmapTimeline = async (targetDays: number, startDateStr: string) => {
+    if (!activeTrack) return;
+    const recalculatedSections = recalculateTrackTimeline(
+      activeTrack.sections,
+      startDateStr,
+      targetDays
+    );
+
+    // Update local state
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
-        const recalculatedSections = recalculateTrackTimeline(
-          track.sections,
-          startDateStr,
-          targetDays
-        );
         return {
           ...track,
           targetDays,
@@ -86,10 +101,26 @@ export default function Home() {
         };
       })
     );
+
+    // Save to SQLite
+    try {
+      await fetch('/api/tracks/timeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trackId: activeTrackId,
+          roadmapStartDate: startDateStr,
+          targetDays,
+          sections: recalculatedSections,
+        }),
+      });
+    } catch (e) {
+      console.error('Failed to update timeline in SQLite:', e);
+    }
   };
 
   // Handler: Toggle Question Completion
-  const handleToggleQuestion = (questionId: string) => {
+  const handleToggleQuestion = async (questionId: string) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
@@ -107,10 +138,20 @@ export default function Home() {
         };
       })
     );
+
+    try {
+      await fetch('/api/questions/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId }),
+      });
+    } catch (e) {
+      console.error('Failed to toggle completion in SQLite:', e);
+    }
   };
 
   // Handler: Delete Question
-  const handleDeleteQuestion = (questionId: string) => {
+  const handleDeleteQuestion = async (questionId: string) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
@@ -126,10 +167,20 @@ export default function Home() {
         };
       })
     );
+
+    try {
+      await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId, action: 'reject' }),
+      });
+    } catch (e) {
+      console.error('Failed to delete question from SQLite:', e);
+    }
   };
 
-  // Handler: Update Question metadata
-  const handleUpdateQuestion = (questionId: string, updates: Partial<Question>) => {
+  // Handler: Update Question metadata (notes)
+  const handleUpdateQuestion = async (questionId: string, updates: Partial<Question>) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
@@ -147,10 +198,22 @@ export default function Home() {
         };
       })
     );
+
+    if (updates.notes !== undefined) {
+      try {
+        await fetch('/api/questions/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId, notes: updates.notes }),
+        });
+      } catch (e) {
+        console.error('Failed to update notes in SQLite:', e);
+      }
+    }
   };
 
   // Handler: Update Section Timeline Dates
-  const handleSaveTimeline = (sectionId: string, startDate: string, endDate: string) => {
+  const handleSaveTimeline = async (sectionId: string, startDate: string, endDate: string) => {
     setTracks((prevTracks) =>
       prevTracks.map((track) => {
         if (track.id !== activeTrackId) return track;
@@ -162,10 +225,20 @@ export default function Home() {
         };
       })
     );
+
+    try {
+      await fetch('/api/sections/timeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId, startDate, endDate }),
+      });
+    } catch (e) {
+      console.error('Failed to update section timeline in SQLite:', e);
+    }
   };
 
-  // Handler: Add Question under parent section & subsection
-  const handleAddQuestion = (
+  // Handler: Submit Question for Admin Approval
+  const handleAddQuestion = async (
     sectionId: string,
     subsectionTitle: string,
     questionData: {
@@ -175,124 +248,118 @@ export default function Home() {
       notes?: string;
     }
   ) => {
-    const newQuestion: Question = {
-      id: `q-custom-${Date.now()}`,
-      title: questionData.title,
-      completed: false,
-      difficulty: questionData.difficulty,
-      url: questionData.url,
-      notes: questionData.notes,
-      custom: true,
-    };
+    try {
+      const res = await fetch('/api/questions/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sectionId,
+          subsectionTitle,
+          ...questionData,
+        }),
+      });
 
-    setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
-        return {
-          ...track,
-          sections: track.sections.map((sec) => {
-            if (sec.id !== sectionId) return sec;
-            
-            const existingSubIndex = sec.subsections.findIndex(
-              (sub) => sub.title.toLowerCase() === subsectionTitle.toLowerCase()
-            );
+      const data = await res.json();
+      if (res.ok) {
+        alert('🎉 Question submitted for Admin Approval! An administrator will review and publish it live.');
+        fetchPendingQueue();
+      } else {
+        alert(data.error || 'Failed to submit question.');
+      }
+    } catch (e) {
+      console.error('Failed to submit question:', e);
+    }
+  };
 
-            if (existingSubIndex >= 0) {
-              const updatedSubs = [...sec.subsections];
-              updatedSubs[existingSubIndex] = {
-                ...updatedSubs[existingSubIndex],
-                questions: [...updatedSubs[existingSubIndex].questions, newQuestion],
-              };
-              return { ...sec, subsections: updatedSubs };
-            } else {
-              const newSub = {
-                id: `sub-custom-${Date.now()}`,
-                title: subsectionTitle,
-                questions: [newQuestion],
-              };
-              return { ...sec, subsections: [...sec.subsections, newSub] };
-            }
-          }),
-        };
-      })
-    );
+  // Admin Approve Handler
+  const handleApproveQuestion = async (questionId: string) => {
+    try {
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId, action: 'approve' }),
+      });
+      if (res.ok) {
+        fetchPendingQueue();
+        fetchTracksData(); // Refresh live syllabus
+      }
+    } catch (e) {
+      console.error('Failed to approve question:', e);
+    }
+  };
+
+  // Admin Reject Handler
+  const handleRejectQuestion = async (questionId: string) => {
+    try {
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId, action: 'reject' }),
+      });
+      if (res.ok) {
+        fetchPendingQueue();
+      }
+    } catch (e) {
+      console.error('Failed to reject question:', e);
+    }
   };
 
   // Handler: Add Section Topic
-  const handleAddSection = (sectionData: {
+  const handleAddSection = async (sectionData: {
     topic?: string;
     sectionTitle: string;
     startDate: string;
     endDate: string;
     initialSubsections?: string[];
   }) => {
-    const newSection: Section = {
-      id: `sec-custom-${Date.now()}`,
-      topic: sectionData.topic || sectionData.sectionTitle,
-      sectionTitle: sectionData.sectionTitle,
-      startDate: sectionData.startDate,
-      endDate: sectionData.endDate,
-      originalWeightDays: 5,
-      subsections: (sectionData.initialSubsections || ['General']).map((stTitle, i) => ({
-        id: `sub-custom-${Date.now()}-${i}`,
-        title: stTitle,
-        questions: [],
-      })),
-    };
+    if (!activeTrackId) return;
 
-    setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
-        return {
-          ...track,
-          sections: [...track.sections, newSection],
-        };
-      })
-    );
+    try {
+      await fetch('/api/sections/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trackId: activeTrackId,
+          ...sectionData,
+        }),
+      });
+      fetchTracksData();
+    } catch (e) {
+      console.error('Failed to add section:', e);
+    }
   };
 
   // Handler: Delete Section Topic
-  const handleDeleteSection = (sectionId: string) => {
+  const handleDeleteSection = async (sectionId: string) => {
     if (!confirm('Are you sure you want to delete this topic and all its sub-sections and questions?')) return;
-    setTracks((prevTracks) =>
-      prevTracks.map((track) => {
-        if (track.id !== activeTrackId) return track;
-        return {
-          ...track,
-          sections: track.sections.filter((s) => s.id !== sectionId),
-        };
-      })
-    );
+    try {
+      await fetch('/api/sections/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sectionId }),
+      });
+      fetchTracksData();
+    } catch (e) {
+      console.error('Failed to delete section:', e);
+    }
   };
 
   // Handler: Add Track
-  const handleAddTrack = (title: string, description: string) => {
-    const newTrackId = `track-${Date.now()}`;
-    const newTrack: Track = {
-      id: newTrackId,
-      title,
-      description,
-      targetDays: 60,
-      roadmapStartDate: new Date().toISOString().slice(0, 10),
-      sections: [
-        {
-          id: `sec-${Date.now()}`,
-          topic: 'Getting Started',
-          startDate: 'TBD',
-          endDate: 'TBD',
-          originalWeightDays: 7,
-          subsections: [
-            {
-              id: `sub-${Date.now()}`,
-              title: 'General Questions',
-              questions: [],
-            },
-          ],
-        },
-      ],
-    };
-    setTracks((prev) => [...prev, newTrack]);
-    setActiveTrackId(newTrackId);
+  const handleAddTrack = async (title: string, description: string) => {
+    try {
+      const res = await fetch('/api/tracks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description }),
+      });
+      const data = await res.json();
+      if (data.trackId) {
+        setTracks(data.tracks);
+        setActiveTrackId(data.trackId);
+      }
+    } catch (e) {
+      console.error('Failed to create track:', e);
+    }
   };
 
   // Export / Import / Reset handlers
@@ -300,7 +367,7 @@ export default function Home() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tracks, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `planly_interview_tracker_backup_${new Date().toISOString().slice(0, 10)}.json`);
+    downloadAnchor.setAttribute("download", `planly_interview_tracker_sqlite_backup_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -325,11 +392,9 @@ export default function Home() {
     }
   };
 
-  const handleResetDefaults = () => {
-    if (confirm('Are you sure you want to reset all tracks to initial default syllabi? Local modifications will be cleared.')) {
-      setTracks(initialTracks);
-      setActiveTrackId(initialTracks[0].id);
-      localStorage.removeItem(STORAGE_KEY);
+  const handleResetDefaults = async () => {
+    if (confirm('Are you sure you want to reset all tracks to initial default syllabi in SQLite? Custom edits will be reset.')) {
+      fetchTracksData();
     }
   };
 
@@ -370,7 +435,7 @@ export default function Home() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400 text-sm">
-        Loading interview roadmap...
+        Connecting to SQLite Database & Loading Roadmap...
       </div>
     );
   }
@@ -395,6 +460,8 @@ export default function Home() {
         onExportData={handleExportData}
         onImportData={handleImportData}
         onResetDefaults={handleResetDefaults}
+        pendingCount={pendingQuestions.length}
+        onOpenAdminApproval={() => setIsAdminApprovalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -445,7 +512,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
-        Planly — Interview Preparation Tracker • Built with Next.js, React & Tailwind CSS
+        Planly — Interview Preparation Tracker • Built with Next.js, React, Tailwind CSS & SQLite
       </footer>
 
       {/* Modals */}
@@ -479,6 +546,14 @@ export default function Home() {
         isOpen={isAddTrackOpen}
         onClose={() => setIsAddTrackOpen(false)}
         onAddTrack={handleAddTrack}
+      />
+
+      <AdminApprovalModal
+        pendingQuestions={pendingQuestions}
+        isOpen={isAdminApprovalOpen}
+        onClose={() => setIsAdminApprovalOpen(false)}
+        onApprove={handleApproveQuestion}
+        onReject={handleRejectQuestion}
       />
     </div>
   );

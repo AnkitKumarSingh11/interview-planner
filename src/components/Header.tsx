@@ -9,9 +9,8 @@ import {
   Download, 
   Upload, 
   RotateCcw, 
-  Calendar, 
-  CheckCircle2, 
-  Target 
+  Target,
+  ShieldCheck
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -26,6 +25,8 @@ interface HeaderProps {
   onExportData: () => void;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onResetDefaults: () => void;
+  pendingCount: number;
+  onOpenAdminApproval: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +41,8 @@ export const Header: React.FC<HeaderProps> = ({
   onExportData,
   onImportData,
   onResetDefaults,
+  pendingCount,
+  onOpenAdminApproval,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -62,14 +65,14 @@ export const Header: React.FC<HeaderProps> = ({
                   Interview Tracker
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Roadmap & Timeline Progress Manager</p>
+              <p className="text-xs text-slate-400">Roadmap & SQLite Database Tracker</p>
             </div>
           </div>
 
           {/* Quick Actions & Search */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[200px] sm:w-64">
+            <div className="relative flex-1 min-w-[180px] sm:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
@@ -80,13 +83,28 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </div>
 
+            {/* Admin Approval Button */}
+            <button
+              onClick={onOpenAdminApproval}
+              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg transition-all"
+              title="Open Admin Question Approval Queue"
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              <span>Admin Approvals</span>
+              {pendingCount > 0 && (
+                <span className="flex items-center justify-center min-w-[18px] h-4 px-1 text-[10px] font-bold bg-amber-500 text-slate-950 rounded-full">
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+
             {/* Action Buttons */}
             <button
               onClick={onOpenAddQuestion}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-sm transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Question</span>
+              <span>Submit Question</span>
             </button>
 
             <button
@@ -94,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span>Add Section</span>
+              <span>Add Topic</span>
             </button>
 
             {/* Export / Import / Reset */}
@@ -122,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
               <button
                 onClick={onResetDefaults}
-                title="Reset Default Syllabi"
+                title="Reset Database Syllabi"
                 className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
