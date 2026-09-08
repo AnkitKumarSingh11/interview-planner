@@ -42,7 +42,9 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
 
   return (
     <div
-      className={`group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+      id={`q-row-${question.id}`}
+      onClick={() => onToggleComplete(question.id)}
+      className={`group flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
         question.completed
           ? 'bg-slate-900/40 border-slate-800/60 text-slate-400'
           : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700 hover:bg-slate-850 shadow-sm'
@@ -51,7 +53,10 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Custom Checkbox */}
         <button
-          onClick={() => onToggleComplete(question.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleComplete(question.id);
+          }}
           className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all shrink-0 ${
             question.completed
               ? 'bg-emerald-600 border-emerald-500 text-white shadow-sm'
@@ -68,6 +73,7 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
             href={problemUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             title="Open question in new tab"
             className={`text-sm font-medium transition-all hover:underline flex items-center gap-1.5 ${
               question.completed
@@ -103,6 +109,7 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
           href={problemUrl}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           title="Open problem link in new tab"
           className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-colors"
         >
@@ -111,7 +118,10 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
 
         {/* Notes Button */}
         <button
-          onClick={() => setShowNotesModal(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowNotesModal(true);
+          }}
           title={question.notes ? 'View Notes' : 'Add Notes'}
           className={`p-1.5 rounded-lg transition-colors ${
             question.notes
@@ -124,7 +134,10 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
 
         {/* Delete Button */}
         <button
-          onClick={() => onDeleteQuestion(question.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteQuestion(question.id);
+          }}
           title="Delete Question"
           className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
         >
@@ -134,7 +147,10 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
 
       {/* Notes Modal */}
       {showNotesModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+        >
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">

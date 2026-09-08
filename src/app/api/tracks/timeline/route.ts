@@ -6,8 +6,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const { trackId, roadmapStartDate, targetDays, sections } = await request.json();
-    if (!trackId || !sections) {
-      return NextResponse.json({ error: 'Track ID and sections are required' }, { status: 400 });
+    if (!trackId) {
+      return NextResponse.json({ error: 'Track ID is required' }, { status: 400 });
     }
     updateTrackTimelineSettings(trackId, roadmapStartDate, targetDays, sections);
     return NextResponse.json({ success: true });

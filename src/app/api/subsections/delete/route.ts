@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { approveQuestion, rejectQuestion } from '@/db';
+import { deleteSubsectionFromSection } from '@/db';
 import { isAdminAuthenticated } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -11,18 +11,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized admin access' }, { status: 401 });
     }
 
-    const { questionId, action } = await request.json();
-    if (!questionId || !action) {
-      return NextResponse.json({ error: 'Question ID and action are required' }, { status: 400 });
+    const { subsectionId } = await request.json();
+    if (!subsectionId) {
+      return NextResponse.json({ error: 'Sub-section ID is required' }, { status: 400 });
     }
 
-    if (action === 'approve') {
-      approveQuestion(questionId);
-    } else if (action === 'reject') {
-      rejectQuestion(questionId);
-    }
-
-    return NextResponse.json({ success: true, action });
+    deleteSubsectionFromSection(subsectionId);
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

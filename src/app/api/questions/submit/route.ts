@@ -6,14 +6,19 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { sectionId, subsectionTitle, title, difficulty, url, notes } = body;
+    const { trackId, sectionId, newTopicName, subsectionTitle, title, difficulty, url, notes } = body;
 
-    if (!sectionId || !title) {
-      return NextResponse.json({ error: 'Section and question title are required' }, { status: 400 });
+    if ((!sectionId && (!trackId || !newTopicName)) || !title) {
+      return NextResponse.json(
+        { error: 'Section or new topic name and question title are required' },
+        { status: 400 }
+      );
     }
 
     const questionId = submitQuestionForApproval({
+      trackId,
       sectionId,
+      newTopicName,
       subsectionTitle: subsectionTitle || 'General Questions',
       title,
       difficulty: difficulty || 'Medium',
@@ -26,6 +31,6 @@ export async function POST(request: Request) {
       questionId,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

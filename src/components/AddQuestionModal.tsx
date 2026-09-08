@@ -10,16 +10,17 @@ interface AddQuestionModalProps {
   defaultSubsectionId?: string;
   isOpen: boolean;
   onClose: () => void;
-  onAddQuestion: (
-    sectionId: string,
-    subsectionTitle: string,
+  onAddQuestion: (payload: {
+    sectionId?: string;
+    newTopicName?: string;
+    subsectionTitle: string;
     questionData: {
       title: string;
       difficulty: Difficulty;
       url?: string;
       notes?: string;
-    }
-  ) => void;
+    };
+  }) => void;
 }
 
 export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
@@ -33,9 +34,13 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   const [selectedSectionId, setSelectedSectionId] = useState<string>(
     defaultSectionId || track.sections[0]?.id || ''
   );
+  const [isNewParentTopic, setIsNewParentTopic] = useState<boolean>(false);
+  const [customParentTopic, setCustomParentTopic] = useState<string>('');
+
   const [selectedSubsectionTitle, setSelectedSubsectionTitle] = useState<string>('');
   const [customSubsectionTitle, setCustomSubsectionTitle] = useState<string>('');
   const [isNewSubsection, setIsNewSubsection] = useState<boolean>(false);
+
   const [title, setTitle] = useState<string>('');
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [url, setUrl] = useState<string>('');
@@ -44,15 +49,19 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   useEffect(() => {
     if (defaultSectionId) {
       setSelectedSectionId(defaultSectionId);
+      setIsNewParentTopic(false);
     } else if (track.sections.length > 0) {
       setSelectedSectionId(track.sections[0].id);
+      setIsNewParentTopic(false);
+    } else {
+      setIsNewParentTopic(true);
     }
   }, [defaultSectionId, track, isOpen]);
 
   const currentParentSection = track.sections.find((s) => s.id === selectedSectionId);
 
   useEffect(() => {
-    if (currentParentSection && currentParentSection.subsections.length > 0) {
+    if (!isNewParentTopic && currentParentSection && currentParentSection.subsections.length > 0) {
       if (defaultSubsectionId) {
         const matchingSub = currentParentSection.subsections.find(
           (sub) => sub.id === defaultSubsectionId
@@ -69,28 +78,37 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
       setIsNewSubsection(true);
       setCustomSubsectionTitle('General Questions');
     }
-  }, [selectedSectionId, currentParentSection, defaultSubsectionId]);
+  }, [selectedSectionId, currentParentSection, defaultSubsectionId, isNewParentTopic]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !selectedSectionId) return;
+    if (!title.trim()) return;
+
+    if (isNewParentTopic && !customParentTopic.trim()) return;
+    if (!isNewParentTopic && !selectedSectionId) return;
 
     const subTitle = isNewSubsection
       ? customSubsectionTitle.trim() || 'General Questions'
       : selectedSubsectionTitle;
 
-    onAddQuestion(selectedSectionId, subTitle, {
-      title: title.trim(),
-      difficulty,
-      url: url.trim() || undefined,
-      notes: notes.trim() || undefined,
+    onAddQuestion({
+      sectionId: isNewParentTopic ? undefined : selectedSectionId,
+      newTopicName: isNewParentTopic ? customParentTopic.trim() : undefined,
+      subsectionTitle: subTitle,
+      questionData: {
+        title: title.trim(),
+        difficulty,
+        url: url.trim() || undefined,
+        notes: notes.trim() || undefined,
+      },
     });
 
     setTitle('');
     setUrl('');
     setNotes('');
+    setCustomParentTopic('');
     onClose();
   };
 
@@ -143,23 +161,50 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             />
           </div>
 
-          {/* 1st Dropdown: Parent Main Topic */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-              <FolderKanban className="w-3.5 h-3.5" />
-              1. Parent Topic *
-            </label>
-            <select
-              value={selectedSectionId}
-              onChange={(e) => setSelectedSectionId(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-slate-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-all"
-            >
-              {track.sections.map((sec) => (
-                <option key={sec.id} value={sec.id}>
-                  {sec.topic} ({sec.subsections.length} sub-sections)
-                </option>
-              ))}
-            </select>
+          {/* 1st Dropdown / Input: Parent Main Topic */}
+          <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                <FolderKanban className="w-3.5 h-3.5" />
+                1. Parent Topic *
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !isNewParentTopic;
+                  setIsNewParentTopic(nextState);
+                  if (nextState) {
+                    setIsNewSubsection(true);
+                  }
+                }}
+                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+              >
+                {isNewParentTopic ? 'Choose Existing Topic' : '+ Create New Topic'}
+              </button>
+            </div>
+
+            {isNewParentTopic ? (
+              <input
+                type="text"
+                required
+                value={customParentTopic}
+                onChange={(e) => setCustomParentTopic(e.target.value)}
+                placeholder="Enter new parent topic name (e.g. Dynamic Programming)..."
+                className="w-full px-3.5 py-2 bg-slate-900 border border-indigo-500/50 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all"
+              />
+            ) : (
+              <select
+                value={selectedSectionId}
+                onChange={(e) => setSelectedSectionId(e.target.value)}
+                className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-slate-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-all"
+              >
+                {track.sections.map((sec) => (
+                  <option key={sec.id} value={sec.id}>
+                    {sec.topic} ({sec.subsections.length} sub-sections)
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* 2nd Dependent Dropdown: Sub-section */}
@@ -167,15 +212,17 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                2. Sub-section (Under "{currentParentSection?.topic || 'Selected Topic'}") *
+                2. Sub-section (Under "{isNewParentTopic ? (customParentTopic || 'New Topic') : (currentParentSection?.topic || 'Selected Topic')}") *
               </label>
-              <button
-                type="button"
-                onClick={() => setIsNewSubsection(!isNewSubsection)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
-              >
-                {isNewSubsection ? 'Choose Existing Sub-section' : '+ New Sub-section'}
-              </button>
+              {!isNewParentTopic && (
+                <button
+                  type="button"
+                  onClick={() => setIsNewSubsection(!isNewSubsection)}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                >
+                  {isNewSubsection ? 'Choose Existing Sub-section' : '+ New Sub-section'}
+                </button>
+              )}
             </div>
 
             {isNewSubsection ? (
@@ -183,7 +230,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                 type="text"
                 value={customSubsectionTitle}
                 onChange={(e) => setCustomSubsectionTitle(e.target.value)}
-                placeholder="Enter new sub-section title..."
+                placeholder="Enter sub-section title (e.g. General Questions)..."
                 className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-all"
               />
             ) : (

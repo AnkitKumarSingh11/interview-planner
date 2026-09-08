@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { initialTracks } from '@/data/initialData';
 import { Track, Section, Question, Difficulty } from '@/types/tracker';
 
@@ -12,12 +13,24 @@ if (!fs.existsSync(dbDir)) {
 const dbPath = path.join(dbDir, 'tracker.db');
 const db = new Database(dbPath);
 
-// Enable WAL mode for high concurrency & speed
+// Enable WAL mode for performance
 db.pragma('journal_mode = WAL');
 
-// Initialize Tables Schema
+// Password Hashing Helper (Salted PBKDF2 SHA-512)
+export function hashPassword(password: string, salt?: string): string {
+  const actualSalt = salt || crypto.randomBytes(16).toString('hex');
+  const derivedKey = crypto.pbkdf2Sync(password, actualSalt, 100000, 64, 'sha512').toString('hex');
+  return `pbkdf2:${actualSalt}:${derivedKey}`;
+}
+
+// Initialize Database Schema & Seed Defaults
 export function initDb() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      username TEXT PRIMARY KEY,
+      password_hash TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS tracks (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
@@ -59,15 +72,38 @@ export function initDb() {
     );
   `);
 
-  // Check if DB is empty; if so, seed initial dataset
-  const count = db.prepare('SELECT count(*) as count FROM tracks').get() as { count: number };
-  if (count.count === 0) {
-    seedDatabase();
+  // Seed default admin user if not exists
+  const adminCount = db.prepare('SELECT count(*) as count FROM admin_users').get() as { count: number };
+  if (adminCount.count === 0) {
+    const defaultUsername = process.env.INITIAL_ADMIN_USERNAME || 'AnkitAvi11';
+    const defaultPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Avengers11@383';
+    const defaultPasswordHash = hashPassword(defaultPassword);
+    db.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').run(
+      defaultUsername,
+      defaultPasswordHash
+    );
+    console.log(`Admin user ${defaultUsername} initialized.`);
+  }
+
+  // Check if questions count is 0; if so, re-seed database defaults
+  const questionCount = db.prepare('SELECT count(*) as count FROM questions').get() as { count: number };
+  if (questionCount.count === 0) {
+    resetAndSeedDatabase();
   }
 }
 
+export function resetAndSeedDatabase() {
+  db.exec(`
+    DELETE FROM questions;
+    DELETE FROM subsections;
+    DELETE FROM sections;
+    DELETE FROM tracks;
+  `);
+  seedDatabase();
+}
+
 function seedDatabase() {
-  console.log('Seeding initial tracks and syllabi into SQLite database...');
+  console.log('Seeding initial tracks into SQLite database...');
 
   const insertTrack = db.prepare(`
     INSERT INTO tracks (id, title, description, roadmap_start_date, target_days)
@@ -133,10 +169,53 @@ function seedDatabase() {
   });
 
   transaction(initialTracks);
-  console.log('Database seeded successfully!');
+  console.log('Database seeded successfully with DSA & LLD syllabi!');
 }
 
-// Helper DB Access Functions
+// Admin Authentication Helpers
+
+export function verifyAdminCredentials(username: string, password: string): boolean {
+  initDb();
+  const user = db
+    .prepare('SELECT * FROM admin_users WHERE username = ?')
+    .get(username) as { username: string; password_hash: string } | undefined;
+
+  if (!user) return false;
+
+  const stored = user.password_hash;
+  if (stored.startsWith('pbkdf2:')) {
+    const parts = stored.split(':');
+    if (parts.length === 3) {
+      const salt = parts[1];
+      const expectedHash = parts[2];
+      const derivedKey = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512').toString('hex');
+      return derivedKey === expectedHash;
+    }
+  }
+
+  // Legacy fallback (single-pass sha256)
+  const legacyHash = crypto.createHash('sha256').update(password).digest('hex');
+  if (legacyHash === stored) {
+    // Automatically upgrade legacy hash to PBKDF2
+    const newHash = hashPassword(password);
+    db.prepare('UPDATE admin_users SET password_hash = ? WHERE username = ?').run(newHash, username);
+    return true;
+  }
+
+  return false;
+}
+
+export function updateAdminPassword(username: string, newPassword: string): boolean {
+  initDb();
+  const newHash = hashPassword(newPassword);
+  const result = db
+    .prepare('UPDATE admin_users SET password_hash = ? WHERE username = ?')
+    .run(newHash, username);
+
+  return result.changes > 0;
+}
+
+// Data Access Queries
 
 export function getAllTracks(): Track[] {
   initDb();
@@ -156,7 +235,7 @@ export function getAllTracks(): Track[] {
       const mappedSubsections = subsections.map((sub) => {
         const questions = db
           .prepare(
-            'SELECT * FROM questions WHERE subsection_id = ? AND status = "approved"'
+            "SELECT * FROM questions WHERE subsection_id = ? AND status = 'approved'"
           )
           .all(sub.id) as any[];
 
@@ -217,7 +296,9 @@ export function getPendingQuestions() {
 }
 
 export function submitQuestionForApproval(data: {
-  sectionId: string;
+  trackId?: string;
+  sectionId?: string;
+  newTopicName?: string;
   subsectionTitle: string;
   title: string;
   difficulty: Difficulty;
@@ -226,10 +307,37 @@ export function submitQuestionForApproval(data: {
 }) {
   initDb();
 
-  // Find or create subsection
+  let targetSectionId = data.sectionId;
+
+  if (!targetSectionId && data.trackId && data.newTopicName) {
+    const topic = data.newTopicName.trim();
+    let sec = db
+      .prepare('SELECT id FROM sections WHERE track_id = ? AND topic = ?')
+      .get(data.trackId, topic) as { id: string } | undefined;
+
+    if (sec) {
+      targetSectionId = sec.id;
+    } else {
+      targetSectionId = `sec-custom-${Date.now()}`;
+      db.prepare(`
+        INSERT INTO sections (id, track_id, topic, section_title, start_date, end_date, original_weight_days)
+        VALUES (?, ?, ?, ?, 'TBD', 'TBD', 5)
+      `).run(
+        targetSectionId,
+        data.trackId,
+        topic,
+        topic
+      );
+    }
+  }
+
+  if (!targetSectionId) {
+    throw new Error('Valid Section ID or Track ID + New Topic Name is required');
+  }
+
   let sub = db
     .prepare('SELECT id FROM subsections WHERE section_id = ? AND title = ?')
-    .get(data.sectionId, data.subsectionTitle) as { id: string } | undefined;
+    .get(targetSectionId, data.subsectionTitle) as { id: string } | undefined;
 
   let subId = sub?.id;
 
@@ -237,7 +345,7 @@ export function submitQuestionForApproval(data: {
     subId = `sub-custom-${Date.now()}`;
     db.prepare(
       'INSERT INTO subsections (id, section_id, title) VALUES (?, ?, ?)'
-    ).run(subId, data.sectionId, data.subsectionTitle);
+    ).run(subId, targetSectionId, data.subsectionTitle);
   }
 
   const qId = `q-pending-${Date.now()}`;
@@ -259,7 +367,7 @@ export function submitQuestionForApproval(data: {
 
 export function approveQuestion(questionId: string) {
   initDb();
-  db.prepare('UPDATE questions SET status = "approved" WHERE id = ?').run(
+  db.prepare("UPDATE questions SET status = 'approved' WHERE id = ?").run(
     questionId
   );
 }
@@ -293,26 +401,30 @@ export function updateSectionDates(sectionId: string, startDate: string, endDate
 
 export function updateTrackTimelineSettings(
   trackId: string,
-  roadmapStartDate: string,
-  targetDays: number,
-  sections: Section[]
+  roadmapStartDate?: string,
+  targetDays?: number,
+  sections?: Section[]
 ) {
   initDb();
-  db.prepare(
-    'UPDATE tracks SET roadmap_start_date = ?, target_days = ? WHERE id = ?'
-  ).run(roadmapStartDate, targetDays, trackId);
+  if (roadmapStartDate !== undefined || targetDays !== undefined) {
+    db.prepare(
+      'UPDATE tracks SET roadmap_start_date = COALESCE(?, roadmap_start_date), target_days = COALESCE(?, target_days) WHERE id = ?'
+    ).run(roadmapStartDate || null, targetDays || null, trackId);
+  }
 
-  const updateSec = db.prepare(
-    'UPDATE sections SET start_date = ?, end_date = ? WHERE id = ?'
-  );
+  if (sections && Array.isArray(sections) && sections.length > 0) {
+    const updateSec = db.prepare(
+      'UPDATE sections SET start_date = ?, end_date = ? WHERE id = ?'
+    );
 
-  const transaction = db.transaction(() => {
-    for (const sec of sections) {
-      updateSec.run(sec.startDate, sec.endDate, sec.id);
-    }
-  });
+    const transaction = db.transaction(() => {
+      for (const sec of sections) {
+        updateSec.run(sec.startDate, sec.endDate, sec.id);
+      }
+    });
 
-  transaction();
+    transaction();
+  }
 }
 
 export function addSectionToTrack(trackId: string, data: {
@@ -323,6 +435,11 @@ export function addSectionToTrack(trackId: string, data: {
   initialSubsections?: string[];
 }) {
   initDb();
+
+  const track = db.prepare('SELECT id FROM tracks WHERE id = ?').get(trackId);
+  if (!track) {
+    throw new Error(`Track with ID "${trackId}" not found`);
+  }
 
   const secId = `sec-custom-${Date.now()}`;
   db.prepare(`
@@ -353,6 +470,11 @@ export function deleteSectionFromTrack(sectionId: string) {
   db.prepare('DELETE FROM sections WHERE id = ?').run(sectionId);
 }
 
+export function deleteSubsectionFromSection(subsectionId: string) {
+  initDb();
+  db.prepare('DELETE FROM subsections WHERE id = ?').run(subsectionId);
+}
+
 export function createNewTrack(title: string, description: string) {
   initDb();
   const trackId = `track-${Date.now()}`;
@@ -373,4 +495,13 @@ export function createNewTrack(title: string, description: string) {
   ).run(subId, secId, 'General Questions');
 
   return trackId;
+}
+
+export function deleteTrack(trackId: string) {
+  initDb();
+  const track = db.prepare('SELECT id FROM tracks WHERE id = ?').get(trackId);
+  if (!track) {
+    throw new Error(`Track with ID "${trackId}" not found`);
+  }
+  db.prepare('DELETE FROM tracks WHERE id = ?').run(trackId);
 }

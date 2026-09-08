@@ -1,14 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Track } from '@/types/tracker';
 import { 
   BookOpen, 
   Plus, 
   Search, 
-  Download, 
-  Upload, 
-  RotateCcw, 
   Target,
   ShieldCheck
 } from 'lucide-react';
@@ -17,39 +14,49 @@ interface HeaderProps {
   tracks: Track[];
   activeTrackId: string;
   onSelectTrack: (trackId: string) => void;
-  onOpenAddTrack: () => void;
   onOpenAddQuestion: () => void;
-  onOpenAddSection: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onExportData: () => void;
-  onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onResetDefaults: () => void;
-  pendingCount: number;
-  onOpenAdminApproval: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   tracks,
   activeTrackId,
   onSelectTrack,
-  onOpenAddTrack,
   onOpenAddQuestion,
-  onOpenAddSection,
   searchQuery,
   onSearchChange,
-  onExportData,
-  onImportData,
-  onResetDefaults,
-  pendingCount,
-  onOpenAdminApproval,
 }) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY <= 10) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 80) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
+    <header
+      className={`sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg transition-transform duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}
+    >
+      {/* Top Navbar Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-4 gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between py-3.5 gap-4">
           
           {/* Logo and App Brand */}
           <div className="flex items-center space-x-3">
@@ -65,14 +72,14 @@ export const Header: React.FC<HeaderProps> = ({
                   Interview Tracker
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Roadmap & SQLite Database Tracker</p>
+              <p className="text-xs text-slate-400">Roadmap & Progress Tracker</p>
             </div>
           </div>
 
-          {/* Quick Actions & Search */}
+          {/* Search & Submit Question */}
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Search Input */}
-            <div className="relative flex-1 min-w-[180px] sm:w-56">
+            <div className="relative flex-1 min-w-[200px] sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
@@ -83,99 +90,50 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </div>
 
-            {/* Admin Approval Button */}
-            <button
-              onClick={onOpenAdminApproval}
-              className="relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg transition-all"
-              title="Open Admin Question Approval Queue"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Admin Approvals</span>
-              {pendingCount > 0 && (
-                <span className="flex items-center justify-center min-w-[18px] h-4 px-1 text-[10px] font-bold bg-amber-500 text-slate-950 rounded-full">
-                  {pendingCount}
-                </span>
-              )}
-            </button>
-
-            {/* Action Buttons */}
+            {/* Action Button */}
             <button
               onClick={onOpenAddQuestion}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-sm transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-sm transition-all active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Submit Question</span>
             </button>
 
-            <button
-              onClick={onOpenAddSection}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg transition-all"
+            {/* Admin Portal Link */}
+            <a
+              href="/admin"
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-amber-400 bg-slate-800/80 hover:bg-slate-800 rounded-lg border border-slate-700 transition-all ml-1"
+              title="Admin Portal Login"
             >
-              <Plus className="w-4 h-4" />
-              <span>Add Topic</span>
-            </button>
-
-            {/* Export / Import / Reset */}
-            <div className="flex items-center gap-1 border-l border-slate-800 pl-2">
-              <button
-                onClick={onExportData}
-                title="Export Data JSON"
-                className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                title="Import Data JSON"
-                className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json"
-                onChange={onImportData}
-                className="hidden"
-              />
-              <button
-                onClick={onResetDefaults}
-                title="Reset Database Syllabi"
-                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            </div>
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Admin Portal</span>
+            </a>
           </div>
         </div>
+      </div>
 
-        {/* Track Selector Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 no-scrollbar">
-          {tracks.map((track) => {
-            const isActive = track.id === activeTrackId;
-            return (
-              <button
-                key={track.id}
-                onClick={() => onSelectTrack(track.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-                  isActive
-                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/20 border border-indigo-400/30'
-                    : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
-                }`}
-              >
-                <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                <span>{track.title}</span>
-              </button>
-            );
-          })}
-
-          <button
-            onClick={onOpenAddTrack}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 border border-dashed border-indigo-500/30 transition-all whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Track</span>
-          </button>
+      {/* Track Selector Bar */}
+      <div className="border-t border-slate-800/80 bg-slate-900/90">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {tracks.map((track) => {
+              const isActive = track.id === activeTrackId;
+              return (
+                <button
+                  key={track.id}
+                  onClick={() => onSelectTrack(track.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-600/20 border border-indigo-400/30'
+                      : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800'
+                  }`}
+                >
+                  <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <span>{track.title}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </header>
