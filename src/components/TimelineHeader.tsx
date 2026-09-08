@@ -35,15 +35,15 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
   const [showTimelinePicker, setShowTimelinePicker] = useState(false);
 
   // Compute total and completed questions
-  const allQuestions = track.sections.flatMap((s) =>
-    s.subsections.flatMap((sub) => sub.questions)
+  const allQuestions = (track.sections || []).flatMap((s) =>
+    (s.subsections || []).flatMap((sub) => sub.questions || [])
   );
   const totalCount = allQuestions.length;
   const completedCount = allQuestions.filter((q) => q.completed).length;
   const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   // Compute dates range
-  const dates = track.sections
+  const dates = (track.sections || [])
     .flatMap((s) => [s.startDate, s.endDate])
     .filter(Boolean);
   
