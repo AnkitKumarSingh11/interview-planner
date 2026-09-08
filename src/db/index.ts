@@ -85,9 +85,9 @@ export function initDb() {
     console.log(`Admin user ${defaultUsername} initialized.`);
   }
 
-  // Check if questions count is 0; if so, re-seed database defaults
-  const questionCount = db.prepare('SELECT count(*) as count FROM questions').get() as { count: number };
-  if (questionCount.count === 0) {
+  // Check if tracks or questions count is 0; if so, re-seed database defaults with DSA & LLD tracks
+  const trackCount = db.prepare('SELECT count(*) as count FROM tracks').get() as { count: number };
+  if (!trackCount || trackCount.count === 0) {
     resetAndSeedDatabase();
   }
 }
@@ -220,7 +220,16 @@ export function updateAdminPassword(username: string, newPassword: string): bool
 export function getAllTracks(): Track[] {
   initDb();
 
-  const tracks = db.prepare('SELECT * FROM tracks').all() as any[];
+  let tracks = db.prepare('SELECT * FROM tracks').all() as any[];
+
+  if (!tracks || tracks.length === 0) {
+    resetAndSeedDatabase();
+    tracks = db.prepare('SELECT * FROM tracks').all() as any[];
+  }
+
+  if (!tracks || tracks.length === 0) {
+    return initialTracks;
+  }
 
   return tracks.map((t) => {
     const sections = db
