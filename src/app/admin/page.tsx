@@ -47,6 +47,7 @@ export default function AdminDashboardPage() {
   });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
@@ -202,11 +203,12 @@ export default function AdminDashboardPage() {
   }, [activeTrackId, isAuthenticated, isInitialLoading]);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await apiClient('/api/admin/logout', { method: 'POST' });
-      clearAuthToken();
-      router.replace('/admin/login');
     } catch (e) {
+      console.error('Admin logout error:', e);
+    } finally {
       clearAuthToken();
       router.replace('/admin/login');
     }
@@ -402,12 +404,12 @@ export default function AdminDashboardPage() {
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
-  // If initial loading, unauthenticated or checking auth status, do not render Admin Dashboard UI
-  if (isInitialLoading || isAuthenticated === null || isAuthenticated === false) {
+  // If initial loading, logging out, unauthenticated or checking auth status, render InitialLoader
+  if (isInitialLoading || isLoggingOut || isAuthenticated === null || isAuthenticated === false) {
     return (
       <InitialLoader 
         title="Planly Admin" 
-        subtitle="Verifying Admin Security Clearance & Loading Workspace..." 
+        subtitle={isLoggingOut ? "Logging out of Admin Portal..." : "Verifying Admin Security Clearance & Loading Workspace..."} 
       />
     );
   }
@@ -455,10 +457,15 @@ export default function AdminDashboardPage() {
 
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all"
+              disabled={isLoggingOut}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all disabled:opacity-50"
             >
-              <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Logout</span>
+              {isLoggingOut ? (
+                <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+              ) : (
+                <LogOut className="w-4 h-4 text-rose-400" />
+              )}
+              <span>{isLoggingOut ? 'Signing out...' : 'Sign Out'}</span>
             </button>
           </div>
         </div>

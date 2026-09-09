@@ -33,6 +33,7 @@ export default function Home() {
   });
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSectionsLoading, setIsSectionsLoading] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // User Authentication State
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
@@ -461,14 +462,19 @@ export default function Home() {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await apiClient('/api/auth/logout', { method: 'POST' });
-    } catch (e) {}
-    clearAuthToken();
-    setCurrentUser(null);
-    showToast('Signed out. Continuing as guest.', 'info');
-    if (activeTrackId) {
-      fetchTrackSections(activeTrackId, null);
+    } catch (e) {
+      console.error('Logout error:', e);
+    } finally {
+      clearAuthToken();
+      setCurrentUser(null);
+      showToast('Signed out. Continuing as guest.', 'info');
+      if (activeTrackId) {
+        await fetchTrackSections(activeTrackId, null);
+      }
+      setIsLoggingOut(false);
     }
   };
 
@@ -505,8 +511,13 @@ export default function Home() {
     return { ...section, subsections: filteredSubsections };
   }).filter((sec) => sec.subsections.some((sub) => sub.questions.length > 0) || searchQuery === '') : [];
 
-  if (!isLoaded) {
-    return <InitialLoader title="Planly" subtitle="Preparing your interview roadmap..." />;
+  if (!isLoaded || isLoggingOut) {
+    return (
+      <InitialLoader 
+        title="Planly" 
+        subtitle={isLoggingOut ? "Signing out of your account..." : "Preparing your interview roadmap..."} 
+      />
+    );
   }
 
   return (
@@ -527,6 +538,7 @@ export default function Home() {
         currentUser={currentUser}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
       />
 
       {/* Main Content Area */}

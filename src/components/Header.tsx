@@ -10,7 +10,8 @@ import {
   ShieldCheck,
   User,
   LogIn,
-  LogOut
+  LogOut,
+  Loader2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -23,6 +24,7 @@ interface HeaderProps {
   currentUser: { id: string; username: string; role: string } | null;
   onOpenAuthModal: () => void;
   onLogout: () => void;
+  isLoggingOut?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   currentUser,
   onOpenAuthModal,
   onLogout,
+  isLoggingOut = false,
 }) => {
   const [isVisible, setIsVisible] = useState(true);
 
@@ -122,10 +125,15 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 <button
                   onClick={onLogout}
-                  className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-700 rounded transition-colors ml-1"
+                  disabled={isLoggingOut}
+                  className="text-slate-400 hover:text-rose-400 p-1 hover:bg-slate-700 rounded transition-colors ml-1 disabled:opacity-50"
                   title="Sign Out"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  {isLoggingOut ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                  ) : (
+                    <LogOut className="w-3.5 h-3.5" />
+                  )}
                 </button>
               </div>
             ) : (
