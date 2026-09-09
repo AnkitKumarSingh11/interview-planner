@@ -63,37 +63,17 @@ export default function Home() {
         const data = await res.json();
         if (data.authenticated && data.user) {
           setCurrentUser(data.user);
-        } else {
-          setCurrentUser(null);
+          return data.user;
         }
       }
     } catch (e) {
       console.error('Failed to check auth status:', e);
     }
+    setCurrentUser(null);
+    return null;
   };
 
-  // Initial Fetch: Load Track Metadata List
-  const fetchTracksData = async () => {
-    try {
-      const res = await apiClient('/api/tracks');
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setTracks(data);
-        const savedTrackId = typeof window !== 'undefined' ? localStorage.getItem('planly_active_track_id') : null;
-        if (savedTrackId && data.some((t: Track) => t.id === savedTrackId)) {
-          setActiveTrackId(savedTrackId);
-        } else {
-          setActiveTrackId(data[0].id);
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load tracks list from API:', e);
-    } finally {
-      setIsLoaded(true);
-    }
-  };
-
-  // Lazy Fetch: Load Sections for Active Track on Demand
+  // Helper to load sections for a specific track
   const fetchTrackSections = async (trackId: string, loggedInUser: { id: string } | null = currentUser) => {
     if (!trackId) return;
     setIsSectionsLoading(true);
@@ -163,16 +143,107 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    checkAuthStatus();
-    fetchTracksData();
-  }, []);
+  // Unified Initial Fetch: Load Auth, Tracks List, AND Initial Track Sections before hiding loader
+  const fetchInitialData = async () => {
+    setIsLoaded(false);
+    try {
+      const user = await checkAuthStatus();
+
+      const res = await apiClient('/api/tracks');
+      const tracksData = await res.json();
+
+      if (Array.isArray(tracksData) && tracksData.length > 0) {
+        const savedTrackId = typeof window !== 'undefined' ? localStorage.getItem('planly_active_track_id') : null;
+        const initialTrackId = savedTrackId && tracksData.some((t: Track) => t.id === savedTrackId)
+          ? savedTrackId
+          : tracksData[0].id;
+        setActiveTrackId(initialTrackId);
+
+        // Fetch sections for the initial track BEFORE removing initial loader
+        try {
+          const sectionsRes = await apiClient(`/api/tracks/${initialTrackId}/sections`);
+          const sectionsData: Section[] = await sectionsRes.json();
+
+          let savedProgress: Record<string, boolean> = {};
+          let savedNotes: Record<string, string> = {};
+
+          if (!user) {
+            try {
+              const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+              if (rawProgress) savedProgress = JSON.parse(rawProgress);
+
+              const rawNotes = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_notes`);
+              if (rawNotes) savedNotes = JSON.parse(rawNotes);
+            } catch (err) {}
+          }
+
+          const todayStr = new Date().toISOString().slice(0, 10);
+          let savedTimeline = { targetDays: 90, startDate: todayStr };
+
+          try {
+            const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${initialTrackId}`);
+            if (rawTimeline) {
+              const parsed = JSON.parse(rawTimeline);
+              if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
+              if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
+            }
+          } catch (err) {}
+
+          const updatedSections = (Array.isArray(sectionsData) ? sectionsData : []).map((sec) => ({
+            ...sec,
+            subsections: sec.subsections.map((sub) => ({
+              ...sub,
+              questions: sub.questions.map((q) => ({
+                ...q,
+                completed: !user && savedProgress[q.id] !== undefined ? savedProgress[q.id] : q.completed,
+                notes: !user && savedNotes[q.id] !== undefined ? savedNotes[q.id] : q.notes,
+              })),
+            })),
+          }));
+
+          const recalculatedSections = recalculateTrackTimeline(
+            updatedSections,
+            savedTimeline.startDate,
+            savedTimeline.targetDays
+          );
+
+          const initialTracksWithSections = tracksData.map((t: Track) =>
+            t.id === initialTrackId
+              ? {
+                  ...t,
+                  targetDays: savedTimeline.targetDays,
+                  roadmapStartDate: savedTimeline.startDate,
+                  sections: recalculatedSections,
+                }
+              : t
+          );
+
+          setTracks(initialTracksWithSections);
+        } catch (err) {
+          console.error(`Failed to load initial sections for track ${initialTrackId}:`, err);
+          setTracks(tracksData);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load initial tracks data:', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
 
   useEffect(() => {
-    if (activeTrackId) {
-      fetchTrackSections(activeTrackId, currentUser);
+    fetchInitialData();
+  }, []);
+
+  // Fetch sections when switching tracks after initial load if sections not loaded yet
+  useEffect(() => {
+    if (isLoaded && activeTrackId) {
+      const currentTrack = tracks.find((t) => t.id === activeTrackId);
+      if (!currentTrack || !currentTrack.sections || currentTrack.sections.length === 0) {
+        fetchTrackSections(activeTrackId, currentUser);
+      }
     }
-  }, [activeTrackId, currentUser]);
+  }, [activeTrackId, isLoaded]);
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 

@@ -46,8 +46,54 @@ export default function AdminDashboardPage() {
     return 'pending';
   });
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const fetchTrackSections = async (trackId: string) => {
+    if (!trackId) return;
+    setIsDataLoading(true);
+    try {
+      const res = await apiClient(`/api/tracks/${trackId}/sections`);
+      const sectionsData = await res.json();
+      if (Array.isArray(sectionsData)) {
+        setTracks((prev) =>
+          prev.map((t) => (t.id === trackId ? { ...t, sections: sectionsData } : t))
+        );
+      }
+    } catch (e) {
+      console.error(`Failed to load sections for track ${trackId}:`, e);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
+
+  const fetchAdminData = async (overrideTrackId?: string) => {
+    setIsDataLoading(true);
+    try {
+      const pendingRes = await apiClient('/api/admin/pending');
+      if (pendingRes.status === 401 || pendingRes.status === 403) {
+        router.replace('/admin/login');
+        return;
+      }
+      const pendingData = await pendingRes.json();
+      if (Array.isArray(pendingData)) setPendingQuestions(pendingData);
+
+      const tracksRes = await apiClient('/api/tracks');
+      const tracksData = await tracksRes.json();
+      if (Array.isArray(tracksData) && tracksData.length > 0) {
+        setTracks(tracksData);
+        const preferredId = overrideTrackId || activeTrackId;
+        const targetId = preferredId && tracksData.some(t => t.id === preferredId) ? preferredId : tracksData[0].id;
+        setActiveTrackId(targetId);
+        await fetchTrackSections(targetId);
+      }
+    } catch (e) {
+      console.error('Failed to load admin data:', e);
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
 
   const fetchPendingQuestions = async () => {
     setIsDataLoading(true);
@@ -109,9 +155,9 @@ export default function AdminDashboardPage() {
   const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
   const [isAddTrackOpen, setIsAddTrackOpen] = useState(false);
 
-  // 1. Strict Authentication Guard & State Persistence
+  // 1. Strict Authentication Guard & State Persistence with Full Initial Load
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndLoad = async () => {
       try {
         const res = await apiClient('/api/admin/check-auth');
         const data = await res.json();
@@ -129,7 +175,8 @@ export default function AdminDashboardPage() {
               setActiveTrackId(strk);
             }
           }
-          fetchAdminData(savedTrack);
+          // Await full initial admin data fetch BEFORE completing initial loading state
+          await fetchAdminData(savedTrack);
         } else {
           setIsAuthenticated(false);
           router.replace('/admin/login');
@@ -137,62 +184,22 @@ export default function AdminDashboardPage() {
       } catch (e) {
         setIsAuthenticated(false);
         router.replace('/admin/login');
+      } finally {
+        setIsInitialLoading(false);
       }
     };
 
-    checkAuth();
+    checkAuthAndLoad();
   }, []);
 
-  const fetchAdminData = async (overrideTrackId?: string) => {
-    setIsDataLoading(true);
-    try {
-      const pendingRes = await apiClient('/api/admin/pending');
-      if (pendingRes.status === 401 || pendingRes.status === 403) {
-        router.replace('/admin/login');
-        return;
-      }
-      const pendingData = await pendingRes.json();
-      if (Array.isArray(pendingData)) setPendingQuestions(pendingData);
-
-      const tracksRes = await apiClient('/api/tracks');
-      const tracksData = await tracksRes.json();
-      if (Array.isArray(tracksData) && tracksData.length > 0) {
-        setTracks(tracksData);
-        const preferredId = overrideTrackId || activeTrackId;
-        const targetId = preferredId && tracksData.some(t => t.id === preferredId) ? preferredId : tracksData[0].id;
-        setActiveTrackId(targetId);
-        await fetchTrackSections(targetId);
-      }
-    } catch (e) {
-      console.error('Failed to load admin data:', e);
-    } finally {
-      setIsDataLoading(false);
-    }
-  };
-
-  const fetchTrackSections = async (trackId: string) => {
-    if (!trackId) return;
-    setIsDataLoading(true);
-    try {
-      const res = await apiClient(`/api/tracks/${trackId}/sections`);
-      const sectionsData = await res.json();
-      if (Array.isArray(sectionsData)) {
-        setTracks((prev) =>
-          prev.map((t) => (t.id === trackId ? { ...t, sections: sectionsData } : t))
-        );
-      }
-    } catch (e) {
-      console.error(`Failed to load sections for track ${trackId}:`, e);
-    } finally {
-      setIsDataLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (isAuthenticated && activeTrackId) {
-      fetchTrackSections(activeTrackId);
+    if (!isInitialLoading && isAuthenticated && activeTrackId) {
+      const currentTrack = tracks.find((t) => t.id === activeTrackId);
+      if (!currentTrack || !currentTrack.sections || currentTrack.sections.length === 0) {
+        fetchTrackSections(activeTrackId);
+      }
     }
-  }, [activeTrackId, isAuthenticated]);
+  }, [activeTrackId, isAuthenticated, isInitialLoading]);
 
   const handleLogout = async () => {
     try {
@@ -395,12 +402,12 @@ export default function AdminDashboardPage() {
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) || tracks[0];
 
-  // If unauthenticated or checking auth status, do not render Admin Dashboard UI
-  if (isAuthenticated === null || isAuthenticated === false) {
+  // If initial loading, unauthenticated or checking auth status, do not render Admin Dashboard UI
+  if (isInitialLoading || isAuthenticated === null || isAuthenticated === false) {
     return (
       <InitialLoader 
         title="Planly Admin" 
-        subtitle="Verifying Admin Security Clearance..." 
+        subtitle="Verifying Admin Security Clearance & Loading Workspace..." 
       />
     );
   }
