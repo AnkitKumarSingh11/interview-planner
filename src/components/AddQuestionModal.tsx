@@ -113,31 +113,31 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-5">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
+            <div className="p-2 bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl border border-teal-200 dark:border-teal-500/20">
               <Plus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">Submit New Question</h3>
-              <p className="text-xs text-slate-400">Questions go through admin approval before publishing</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Submit New Question</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Questions go through admin approval before publishing</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Admin Approval Notice Banner */}
-        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-300 text-xs">
-          <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex items-start gap-2.5 text-amber-700 dark:text-amber-300 text-xs">
+          <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
           <span>
             Submissions require admin approval. Once reviewed by an administrator, your question will appear live in the official syllabus!
           </span>
@@ -148,7 +148,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
           
           {/* Question Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Question Title *
             </label>
             <input
@@ -157,14 +157,14 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. LRU Cache Implementation or Two Sum"
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all"
+              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:border-teal-500 transition-all"
             />
           </div>
 
           {/* 1st Dropdown / Input: Parent Main Topic */}
-          <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+          <div className="space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
                 <FolderKanban className="w-3.5 h-3.5" />
                 1. Parent Topic *
               </label>
@@ -177,7 +177,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                     setIsNewSubsection(true);
                   }
                 }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                className="text-xs text-teal-700 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
               >
                 {isNewParentTopic ? 'Choose Existing Topic' : '+ Create New Topic'}
               </button>
@@ -190,13 +190,13 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                 value={customParentTopic}
                 onChange={(e) => setCustomParentTopic(e.target.value)}
                 placeholder="Enter new parent topic name (e.g. Dynamic Programming)..."
-                className="w-full px-3.5 py-2 bg-slate-900 border border-indigo-500/50 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-teal-500/50 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:border-teal-500 transition-all"
               />
             ) : (
               <select
                 value={selectedSectionId}
                 onChange={(e) => setSelectedSectionId(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-950 border border-indigo-500/30 rounded-xl text-slate-100 text-sm font-semibold focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3.5 py-2 bg-white dark:bg-slate-950 border border-teal-500/30 rounded-xl text-slate-900 dark:text-slate-100 text-sm font-semibold focus:outline-none focus:border-teal-500 transition-all"
               >
                 {(track.sections || []).map((sec) => (
                   <option key={sec.id} value={sec.id}>
@@ -208,17 +208,17 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
           </div>
 
           {/* 2nd Dependent Dropdown: Sub-section */}
-          <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+          <div className="space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 2. Sub-section (Under "{isNewParentTopic ? (customParentTopic || 'New Topic') : (currentParentSection?.topic || 'Selected Topic')}") *
               </label>
               {!isNewParentTopic && (
                 <button
                   type="button"
                   onClick={() => setIsNewSubsection(!isNewSubsection)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                  className="text-xs text-teal-700 dark:text-teal-400 hover:underline font-medium cursor-pointer"
                 >
                   {isNewSubsection ? 'Choose Existing Sub-section' : '+ New Sub-section'}
                 </button>
@@ -231,13 +231,13 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                 value={customSubsectionTitle}
                 onChange={(e) => setCustomSubsectionTitle(e.target.value)}
                 placeholder="Enter sub-section title (e.g. General Questions)..."
-                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 text-xs focus:outline-none focus:border-teal-500 transition-all"
               />
             ) : (
               <select
                 value={selectedSubsectionTitle}
                 onChange={(e) => setSelectedSubsectionTitle(e.target.value)}
-                className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-indigo-500 transition-all"
+                className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-slate-200 text-xs focus:outline-none focus:border-teal-500 transition-all"
               >
                 {currentParentSection?.subsections.map((sub) => (
                   <option key={sub.id} value={sub.title}>
@@ -250,7 +250,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
 
           {/* Difficulty */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Difficulty
             </label>
             <div className="flex items-center gap-2">
@@ -259,14 +259,14 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
                   key={diff}
                   type="button"
                   onClick={() => setDifficulty(diff)}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                     difficulty === diff
                       ? diff === 'Easy'
                         ? 'bg-emerald-600 text-white border-emerald-500'
                         : diff === 'Medium'
                         ? 'bg-amber-600 text-white border-amber-500'
                         : 'bg-rose-600 text-white border-rose-500'
-                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                      : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
                   {diff}
@@ -277,7 +277,7 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
 
           {/* Problem URL Link */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <LinkIcon className="w-3.5 h-3.5 text-slate-400" />
               <span>Reference Link (Optional)</span>
             </label>
@@ -286,13 +286,13 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://leetcode.com/problems/... or GFG link"
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition-all"
+              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:border-teal-500 transition-all"
             />
           </div>
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
               <span>Notes / Solution Hints (Optional)</span>
             </label>
@@ -301,22 +301,22 @@ export const AddQuestionModal: React.FC<AddQuestionModalProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Initial thoughts, key takeaways, approach..."
               rows={2}
-              className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-all resize-none"
+              className="w-full p-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 placeholder-slate-400 text-xs focus:outline-none focus:border-teal-500 transition-all resize-none"
             />
           </div>
 
           {/* Footer Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-xl transition-all"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl shadow-md transition-all"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-md transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Submit Question for Review

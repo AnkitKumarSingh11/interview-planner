@@ -19,8 +19,11 @@ import { InitialLoader } from '@/components/InitialLoader';
 import { AlertCircle, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { apiClient, clearAuthToken } from '@/lib/apiClient';
+import { HeatmapItem } from '@/components/Heatmap';
+import { ProfileModal } from '@/components/ProfileModal';
 
 const LOCAL_PROGRESS_KEY = 'planly_user_progress_v1';
+const GUEST_TIMESTAMPS_KEY = 'planly_guest_completed_timestamps_v1';
 
 export default function Home() {
   const { showToast } = useToast();
@@ -38,6 +41,13 @@ export default function Home() {
   // User Authentication State
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Heatmap & Streak State
+  const [heatmapData, setHeatmapData] = useState<HeatmapItem[]>([]);
+  const [totalCompleted, setTotalCompleted] = useState<number>(0);
+  const [currentStreak, setCurrentStreak] = useState<number>(0);
+  const [longestStreak, setLongestStreak] = useState<number>(0);
 
   const handleSelectTrack = (id: string) => {
     setActiveTrackId(id);
@@ -178,11 +188,116 @@ export default function Home() {
     }
   };
 
+  // Helper to fetch/calculate activity heatmap & streaks
+  const fetchHeatmapData = async (user = currentUser) => {
+    if (user) {
+      try {
+        const res = await apiClient('/api/questions/heatmap');
+        if (res.ok) {
+          const data = await res.json();
+          setHeatmapData(data.heatmap || []);
+          setTotalCompleted(data.totalCompleted || 0);
+          setCurrentStreak(data.currentStreak || 0);
+          setLongestStreak(data.longestStreak || 0);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to fetch heatmap from API:', e);
+      }
+    }
+
+    // Guest mode heatmap calculation
+    try {
+      const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+      const progress: Record<string, boolean> = rawProgress ? JSON.parse(rawProgress) : {};
+      const rawTimestamps = localStorage.getItem(GUEST_TIMESTAMPS_KEY);
+      const timestamps: Record<string, string> = rawTimestamps ? JSON.parse(rawTimestamps) : {};
+
+      const dailyCounts: Record<string, number> = {};
+      let total = 0;
+
+      Object.entries(progress).forEach(([qId, completed]) => {
+        if (completed) {
+          total++;
+          const dateStr = timestamps[qId] || new Date().toISOString().slice(0, 10);
+          dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
+        }
+      });
+
+      const sortedDates = Object.keys(dailyCounts).sort();
+      let cStreak = 0;
+      let lStreak = 0;
+      let tempStreak = 0;
+
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const yesterdayObj = new Date();
+      yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+      const yesterdayStr = yesterdayObj.toISOString().slice(0, 10);
+
+      if (sortedDates.length > 0) {
+        tempStreak = 1;
+        lStreak = 1;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const prev = new Date(sortedDates[i - 1]);
+          const curr = new Date(sortedDates[i]);
+          const diffDays = Math.round((curr.getTime() - prev.getTime()) / (1000 * 3600 * 24));
+          if (diffDays === 1) {
+            tempStreak++;
+          } else if (diffDays > 1) {
+            tempStreak = 1;
+          }
+          if (tempStreak > lStreak) {
+            lStreak = tempStreak;
+          }
+        }
+
+        let checkDate = new Date();
+        if (!dailyCounts[todayStr] && dailyCounts[yesterdayStr]) {
+          checkDate = yesterdayObj;
+        }
+        while (true) {
+          const dStr = checkDate.toISOString().slice(0, 10);
+          if (dailyCounts[dStr]) {
+            cStreak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+      }
+
+      const items: HeatmapItem[] = [];
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 364);
+
+      for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().slice(0, 10);
+        const count = dailyCounts[dateStr] || 0;
+        let level = 0;
+        if (count >= 7) level = 4;
+        else if (count >= 5) level = 3;
+        else if (count >= 3) level = 2;
+        else if (count >= 1) level = 1;
+
+        items.push({ date: dateStr, count, level });
+      }
+
+      setHeatmapData(items);
+      setTotalCompleted(total);
+      setCurrentStreak(cStreak);
+      setLongestStreak(lStreak);
+    } catch (err) {
+      console.error('Failed to calculate guest heatmap:', err);
+    }
+  };
+
   // Unified Initial Fetch: Load Auth, Tracks List, AND Initial Track Sections before hiding loader
   const fetchInitialData = async () => {
     setIsLoaded(false);
     try {
       const user = await checkAuthStatus();
+      await fetchHeatmapData(user);
 
       const res = await apiClient('/api/tracks');
       const tracksData = await res.json();
@@ -416,16 +531,28 @@ export default function Home() {
         console.error('Failed to toggle question completion on server:', e);
       }
     } else {
-      // Guest user: strictly persist progress in localStorage
+      // Guest user: strictly persist progress and timestamp in localStorage
       try {
         const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
         const savedProgress = rawProgress ? JSON.parse(rawProgress) : {};
         savedProgress[questionId] = newCompletedState;
         localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify(savedProgress));
+
+        const rawTimestamps = localStorage.getItem(GUEST_TIMESTAMPS_KEY);
+        const savedTimestamps = rawTimestamps ? JSON.parse(rawTimestamps) : {};
+        if (newCompletedState) {
+          savedTimestamps[questionId] = new Date().toISOString().slice(0, 10);
+        } else {
+          delete savedTimestamps[questionId];
+        }
+        localStorage.setItem(GUEST_TIMESTAMPS_KEY, JSON.stringify(savedTimestamps));
       } catch (err) {
         console.error('Failed to save guest progress in localStorage:', err);
       }
     }
+
+    // Instantly update heatmap activity counts on toggle
+    fetchHeatmapData();
 
     if (newCompletedState) {
       showToast('Question marked as completed! 🎉', 'success');
@@ -584,7 +711,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+    <div className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)] transition-colors duration-200">
       
       {/* Smart Sticky Header Navbar */}
       <Header
@@ -602,6 +729,8 @@ export default function Home() {
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         isLoggingOut={isLoggingOut}
+        onOpenProfileModal={() => (window.location.href = '/profile')}
+        currentStreak={currentStreak}
       />
 
       {/* Main Content Area */}
@@ -621,16 +750,16 @@ export default function Home() {
 
         {/* Section Loader or Content Cards */}
         {isSectionsLoading ? (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-            <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mx-auto" />
-            <h3 className="text-base font-bold text-slate-200">Loading Track Topics & Questions...</h3>
-            <p className="text-xs text-slate-400">Fetching normalized syllabus sections from database</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+            <Loader2 className="w-8 h-8 text-teal-600 dark:text-teal-400 animate-spin mx-auto" />
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Loading Track Topics & Questions...</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Fetching normalized syllabus sections from database</p>
           </div>
         ) : filteredSections.length === 0 ? (
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-            <AlertCircle className="w-8 h-8 text-slate-500 mx-auto" />
-            <h3 className="text-base font-bold text-slate-300">No matching topics or questions found</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+            <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
+            <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">No matching topics or questions found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
               Try adjusting your search query or reset status / difficulty filters.
             </p>
           </div>
@@ -655,11 +784,11 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-6 w-full gap-2">
+      <footer className="py-6 text-center text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between max-w-7xl mx-auto px-6 w-full gap-2 border-t border-slate-200 dark:border-slate-800/60 mt-4">
         <span>Planly — Interview Preparation Tracker</span>
         <a
           href="/admin"
-          className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1"
+          className="text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1"
         >
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>Admin Portal Login</span>
@@ -683,6 +812,20 @@ export default function Home() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Dedicated User Profile & All Tracks Statistics Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        currentUser={currentUser}
+        tracks={tracks}
+        heatmapData={heatmapData}
+        totalCompleted={totalCompleted}
+        currentStreak={currentStreak}
+        longestStreak={longestStreak}
+        onLogout={handleLogout}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
     </div>
   );
