@@ -14,7 +14,6 @@ import {
   LogIn,
   LogOut,
   Loader2,
-  Bell,
   Flame,
   ChevronDown
 } from 'lucide-react';
@@ -143,15 +142,6 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center" title="Toggle Light / Dark Mode">
               <ThemeToggle />
             </div>
-
-            {/* Notification Bell Badge */}
-            <button 
-              className="p-2 text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full transition-colors relative cursor-pointer"
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-teal-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
-            </button>
 
             {/* Submit Question Action Button */}
             <button

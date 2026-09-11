@@ -16,7 +16,7 @@ interface QuestionRowProps {
   onUpdateQuestion: (questionId: string, updates: Partial<Question>) => void;
 }
 
-export const QuestionRow: React.FC<QuestionRowProps> = ({
+const QuestionRowComponent: React.FC<QuestionRowProps> = ({
   question,
   onToggleComplete,
   onDeleteQuestion,
@@ -196,3 +196,5 @@ export const QuestionRow: React.FC<QuestionRowProps> = ({
     </div>
   );
 };
+
+export const QuestionRow = React.memo(QuestionRowComponent);

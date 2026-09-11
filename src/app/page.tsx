@@ -480,7 +480,7 @@ export default function Home() {
     showToast('Roadmap timeline recalculated!', 'success');
   };
 
-  const handleToggleQuestion = async (questionId: string) => {
+  const handleToggleQuestion = React.useCallback(async (questionId: string) => {
     if (!activeTrack) return;
 
     let currentQuestion: Question | undefined;
@@ -503,24 +503,31 @@ export default function Home() {
         if (t.id !== activeTrack.id) return t;
         return {
           ...t,
-          sections: t.sections.map((sec) => ({
-            ...sec,
-            subsections: sec.subsections.map((sub) => ({
-              ...sub,
-              questions: sub.questions.map((q) => {
-                if (q.id === questionId) {
-                  return { ...q, completed: newCompletedState };
-                }
-                return q;
+          sections: t.sections.map((sec) => {
+            const hasQuestion = sec.subsections.some((sub) =>
+              sub.questions.some((q) => q.id === questionId)
+            );
+            if (!hasQuestion) return sec;
+            return {
+              ...sec,
+              subsections: sec.subsections.map((sub) => {
+                const subHasQuestion = sub.questions.some((q) => q.id === questionId);
+                if (!subHasQuestion) return sub;
+                return {
+                  ...sub,
+                  questions: sub.questions.map((q) =>
+                    q.id === questionId ? { ...q, completed: newCompletedState } : q
+                  ),
+                };
               }),
-            })),
-          })),
+            };
+          }),
         };
       })
     );
 
     if (currentUser) {
-      // Authenticated user: DO NOT use localStorage, persist via backend API
+      // Authenticated user: persist via backend API
       try {
         await apiClient('/api/questions/toggle', {
           method: 'POST',
@@ -557,9 +564,9 @@ export default function Home() {
     if (newCompletedState) {
       showToast('Question marked as completed! 🎉', 'success');
     }
-  };
+  }, [activeTrack, currentUser, showToast]);
 
-  const handleUpdateQuestion = async (questionId: string, updatedFields: Partial<Question>) => {
+  const handleUpdateQuestion = React.useCallback(async (questionId: string, updatedFields: Partial<Question>) => {
     if (!activeTrack) return;
 
     setTracks((prevTracks) =>
@@ -567,25 +574,31 @@ export default function Home() {
         if (t.id !== activeTrack.id) return t;
         return {
           ...t,
-          sections: t.sections.map((sec) => ({
-            ...sec,
-            subsections: sec.subsections.map((sub) => ({
-              ...sub,
-              questions: sub.questions.map((q) => {
-                if (q.id === questionId) {
-                  return { ...q, ...updatedFields };
-                }
-                return q;
+          sections: t.sections.map((sec) => {
+            const hasQuestion = sec.subsections.some((sub) =>
+              sub.questions.some((q) => q.id === questionId)
+            );
+            if (!hasQuestion) return sec;
+            return {
+              ...sec,
+              subsections: sec.subsections.map((sub) => {
+                const subHasQuestion = sub.questions.some((q) => q.id === questionId);
+                if (!subHasQuestion) return sub;
+                return {
+                  ...sub,
+                  questions: sub.questions.map((q) =>
+                    q.id === questionId ? { ...q, ...updatedFields } : q
+                  ),
+                };
               }),
-            })),
-          })),
+            };
+          }),
         };
       })
     );
 
     if (updatedFields.notes !== undefined) {
       if (currentUser) {
-        // Authenticated user: save notes via backend API
         try {
           await apiClient('/api/questions/notes', {
             method: 'POST',
@@ -597,7 +610,6 @@ export default function Home() {
           console.error('Failed to save notes on server:', e);
         }
       } else {
-        // Guest user: save notes in localStorage
         try {
           const rawNotes = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_notes`);
           const savedNotes = rawNotes ? JSON.parse(rawNotes) : {};
@@ -609,7 +621,13 @@ export default function Home() {
         }
       }
     }
-  };
+  }, [activeTrack, currentUser, showToast]);
+
+  const handleAddQuestionToSection = React.useCallback((secId: string, subId?: string) => {
+    setAddQuestionDefaultSectionId(secId);
+    setAddQuestionDefaultSubsectionId(subId);
+    setIsAddQuestionOpen(true);
+  }, []);
 
   const handleAddQuestion = async (payload: {
     sectionId?: string;
@@ -668,38 +686,42 @@ export default function Home() {
     }
   };
 
-  const filteredSections = activeTrack && activeTrack.sections ? activeTrack.sections.map((section) => {
-    const searchLower = searchQuery.toLowerCase();
+  const filteredSections = React.useMemo(() => {
+    if (!activeTrack || !activeTrack.sections) return [];
+    const searchLower = searchQuery.toLowerCase().trim();
 
-    const topicMatches =
-      section.topic.toLowerCase().includes(searchLower) ||
-      (section.sectionTitle && section.sectionTitle.toLowerCase().includes(searchLower));
+    return activeTrack.sections.map((section) => {
+      const topicMatches =
+        searchLower === '' ||
+        section.topic.toLowerCase().includes(searchLower) ||
+        (section.sectionTitle && section.sectionTitle.toLowerCase().includes(searchLower));
 
-    const filteredSubsections = section.subsections.map((sub) => {
-      const filteredQuestions = sub.questions.filter((q) => {
-        const matchesSearch =
-          topicMatches ||
-          sub.title.toLowerCase().includes(searchLower) ||
-          q.title.toLowerCase().includes(searchLower);
+      const filteredSubsections = section.subsections.map((sub) => {
+        const filteredQuestions = sub.questions.filter((q) => {
+          const matchesSearch =
+            topicMatches ||
+            sub.title.toLowerCase().includes(searchLower) ||
+            q.title.toLowerCase().includes(searchLower);
 
-        const matchesStatus =
-          filterStatus === 'all'
-            ? true
-            : filterStatus === 'completed'
-            ? q.completed
-            : !q.completed;
+          const matchesStatus =
+            filterStatus === 'all'
+              ? true
+              : filterStatus === 'completed'
+              ? q.completed
+              : !q.completed;
 
-        const matchesDifficulty =
-          filterDifficulty === 'all' ? true : q.difficulty === filterDifficulty;
+          const matchesDifficulty =
+            filterDifficulty === 'all' ? true : q.difficulty === filterDifficulty;
 
-        return matchesSearch && matchesStatus && matchesDifficulty;
-      });
+          return matchesSearch && matchesStatus && matchesDifficulty;
+        });
 
-      return { ...sub, questions: filteredQuestions };
-    }).filter((sub) => sub.questions.length > 0 || searchQuery === '');
+        return { ...sub, questions: filteredQuestions };
+      }).filter((sub) => sub.questions.length > 0 || searchLower === '');
 
-    return { ...section, subsections: filteredSubsections };
-  }).filter((sec) => sec.subsections.some((sub) => sub.questions.length > 0) || searchQuery === '') : [];
+      return { ...section, subsections: filteredSubsections };
+    }).filter((sec) => sec.subsections.some((sub) => sub.questions.length > 0) || searchLower === '');
+  }, [activeTrack, searchQuery, filterStatus, filterDifficulty]);
 
   if (!isLoaded || isLoggingOut) {
     return (
@@ -772,11 +794,7 @@ export default function Home() {
                 defaultExpanded={section.id === activeSectionId}
                 onToggleQuestion={handleToggleQuestion}
                 onUpdateQuestion={handleUpdateQuestion}
-                onAddQuestionToSection={(secId, subId) => {
-                  setAddQuestionDefaultSectionId(secId);
-                  setAddQuestionDefaultSubsectionId(subId);
-                  setIsAddQuestionOpen(true);
-                }}
+                onAddQuestionToSection={handleAddQuestionToSection}
               />
             ))}
           </div>

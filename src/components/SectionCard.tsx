@@ -19,7 +19,7 @@ interface SectionCardProps {
   onAddQuestionToSection: (sectionId: string, subsectionId?: string) => void;
 }
 
-export const SectionCard: React.FC<SectionCardProps> = ({
+export const SectionCardComponent: React.FC<SectionCardProps> = ({
   section,
   defaultExpanded = false,
   onToggleQuestion,
@@ -63,11 +63,19 @@ export const SectionCard: React.FC<SectionCardProps> = ({
     }));
   };
 
-  // Compute section statistics across all sub-sections
-  const allQuestions = section.subsections.flatMap((sub) => sub.questions);
-  const totalQuestions = allQuestions.length;
-  const completedQuestions = allQuestions.filter((q) => q.completed).length;
-  const percentage = totalQuestions > 0 ? Math.round((completedQuestions / totalQuestions) * 100) : 0;
+  // Compute section statistics across all sub-sections efficiently
+  const { totalQuestions, completedQuestions, percentage } = React.useMemo(() => {
+    let total = 0;
+    let completed = 0;
+    for (const sub of section.subsections) {
+      for (const q of sub.questions) {
+        total++;
+        if (q.completed) completed++;
+      }
+    }
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { totalQuestions: total, completedQuestions: completed, percentage: pct };
+  }, [section.subsections]);
 
   const handleHeaderClick = () => {
     const nextState = !isExpanded;
@@ -83,20 +91,20 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   };
 
   return (
-    <div id={section.id} className="scroll-mt-28 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all">
+    <div id={section.id} className="scroll-mt-28 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md transition-all outline-none focus:outline-none">
       
       {/* Section Header */}
       <div 
         onClick={handleHeaderClick}
-        className={`sticky top-0 z-20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md cursor-pointer select-none hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors ${
-          isExpanded ? 'rounded-t-2xl border-b border-slate-100 dark:border-slate-800' : 'rounded-2xl'
+        className={`sticky top-0 z-20 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 backdrop-blur-md cursor-pointer select-none hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-colors focus:outline-none ${
+          isExpanded ? 'rounded-t-2xl' : 'rounded-2xl'
         }`}
       >
         
         {/* Left Title & Timeline */}
         <div className="flex items-start gap-3 min-w-0 flex-1">
           <div className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-md transition-colors mt-0.5 shrink-0">
-            {isExpanded ? <ChevronDown className="w-5 h-5 text-teal-600 dark:text-teal-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+            <ChevronDown className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isExpanded ? 'rotate-0 text-teal-600 dark:text-teal-400' : '-rotate-90 text-slate-400'}`} />
           </div>
 
           <div className="space-y-1 min-w-0 flex-1">
@@ -153,7 +161,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
                 e.stopPropagation();
                 onAddQuestionToSection(section.id);
               }}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-teal-50 dark:bg-teal-600/20 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-600/30 border border-teal-200 dark:border-teal-500/30 rounded-xl transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold bg-teal-50 dark:bg-teal-600/20 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-600/30 border border-teal-200 dark:border-teal-500/30 rounded-xl transition-all cursor-pointer focus:outline-none"
               title="Submit a question under this topic for admin approval"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -163,68 +171,78 @@ export const SectionCard: React.FC<SectionCardProps> = ({
         </div>
       </div>
 
-      {/* Subsections & Questions Body */}
-      {isExpanded && (
-        <div className="p-4 sm:p-5 space-y-4 bg-slate-50/50 dark:bg-slate-950/40 rounded-b-2xl">
-          {section.subsections.length === 0 ? (
-            <div className="text-center py-6 text-slate-400 text-xs">
-              No questions under this topic yet. Click "+ Submit Question" to submit one!
-            </div>
-          ) : (
-            section.subsections.map((subsection) => {
-              const isSubExpanded = Boolean(expandedSubsections[subsection.id]);
-              return (
-                <div key={subsection.id} className="bg-white dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60 overflow-hidden shadow-2xs">
-                  
-                  {/* Subsection Header */}
-                  <div 
-                    onClick={() => toggleSubsection(subsection.id)}
-                    className="flex items-center justify-between px-3.5 py-3 cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition-colors"
-                  >
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-2">
-                      {isSubExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                      )}
-                      <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
-                      <span>{subsection.title}</span>
-                      <span className="text-[10px] text-slate-400 font-normal lowercase">
-                        ({subsection.questions.length} questions)
-                      </span>
-                    </h4>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAddQuestionToSection(section.id, subsection.id);
-                      }}
-                      className="text-[11px] text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 flex items-center gap-1 font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+      {/* Subsections & Questions Body with smooth height and opacity transition */}
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
+          isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="p-4 sm:p-5 space-y-4 bg-slate-50/50 dark:bg-slate-950/40 rounded-b-2xl">
+            {section.subsections.length === 0 ? (
+              <div className="text-center py-6 text-slate-400 text-xs">
+                No questions under this topic yet. Click "+ Submit Question" to submit one!
+              </div>
+            ) : (
+              section.subsections.map((subsection) => {
+                const isSubExpanded = Boolean(expandedSubsections[subsection.id]);
+                return (
+                  <div key={subsection.id} className="bg-white dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800/60 overflow-hidden shadow-2xs">
+                    
+                    {/* Subsection Header */}
+                    <div 
+                      onClick={() => toggleSubsection(subsection.id)}
+                      className="flex items-center justify-between px-3.5 py-3 cursor-pointer select-none hover:bg-slate-100/80 dark:hover:bg-slate-800/60 transition-colors focus:outline-none"
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>Submit Question</span>
-                    </button>
-                  </div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-2">
+                        <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-250 ${isSubExpanded ? 'rotate-0 text-teal-600 dark:text-teal-400' : '-rotate-90 text-slate-400'}`} />
+                        <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+                        <span>{subsection.title}</span>
+                        <span className="text-[10px] text-slate-400 font-normal lowercase">
+                          ({subsection.questions.length} questions)
+                        </span>
+                      </h4>
 
-                  {/* Question Items list */}
-                  {isSubExpanded && (
-                    <div className="grid grid-cols-1 gap-2 p-3.5 pt-2 border-t border-slate-100 dark:border-slate-800/40 bg-slate-50/60 dark:bg-slate-950/20">
-                      {subsection.questions.map((question) => (
-                        <QuestionRow
-                          key={question.id}
-                          question={question}
-                          onToggleComplete={onToggleQuestion}
-                          onUpdateQuestion={onUpdateQuestion}
-                        />
-                      ))}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddQuestionToSection(section.id, subsection.id);
+                        }}
+                        className="text-[11px] text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 flex items-center gap-1 font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1 rounded-lg transition-colors cursor-pointer focus:outline-none"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Submit Question</span>
+                      </button>
                     </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+
+                    {/* Question Items list with smooth height animation */}
+                    <div
+                      className={`grid transition-[grid-template-rows,opacity] duration-250 ease-in-out ${
+                        isSubExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+                      }`}
+                    >
+                      <div className="overflow-hidden">
+                        <div className="grid grid-cols-1 gap-2 p-3.5 pt-2 border-t border-slate-100 dark:border-slate-800/40 bg-slate-50/60 dark:bg-slate-950/20">
+                          {subsection.questions.map((question) => (
+                            <QuestionRow
+                              key={question.id}
+                              question={question}
+                              onToggleComplete={onToggleQuestion}
+                              onUpdateQuestion={onUpdateQuestion}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
+
+export const SectionCard = React.memo(SectionCardComponent);
