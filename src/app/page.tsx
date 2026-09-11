@@ -74,6 +74,28 @@ export default function Home() {
     return null;
   };
 
+  const clearGuestLocalStorage = () => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(LOCAL_PROGRESS_KEY);
+      localStorage.removeItem(`${LOCAL_PROGRESS_KEY}_notes`);
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (
+          key &&
+          (key.startsWith(`${LOCAL_PROGRESS_KEY}_timeline_`) ||
+            key.startsWith('planly_guest_progress'))
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.error('Failed to clear guest local storage:', e);
+    }
+  };
+
   // Helper to load sections for a specific track
   const fetchTrackSections = async (trackId: string, loggedInUser: { id: string } | null = currentUser) => {
     if (!trackId) return;
@@ -98,14 +120,26 @@ export default function Home() {
       const todayStr = new Date().toISOString().slice(0, 10);
       let savedTimeline = { targetDays: 90, startDate: todayStr };
 
-      try {
-        const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${trackId}`);
-        if (rawTimeline) {
-          const parsed = JSON.parse(rawTimeline);
-          if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
-          if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
-        }
-      } catch (err) {}
+      if (loggedInUser) {
+        const currentTrack = tracks.find((t) => t.id === trackId);
+        if (currentTrack?.roadmapStartDate) savedTimeline.startDate = currentTrack.roadmapStartDate;
+        if (currentTrack?.targetDays) savedTimeline.targetDays = currentTrack.targetDays;
+      } else {
+        try {
+          const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${trackId}`);
+          if (rawTimeline) {
+            const parsed = JSON.parse(rawTimeline);
+            if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
+            if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
+          } else {
+            // Automatically persist default timeline to localStorage on guest's first visit
+            localStorage.setItem(
+              `${LOCAL_PROGRESS_KEY}_timeline_${trackId}`,
+              JSON.stringify(savedTimeline)
+            );
+          }
+        } catch (err) {}
+      }
 
       const updatedSections = (Array.isArray(sectionsData) ? sectionsData : []).map((sec) => ({
         ...sec,
@@ -178,17 +212,29 @@ export default function Home() {
             } catch (err) {}
           }
 
+          const initialTrackData = tracksData.find((t: Track) => t.id === initialTrackId);
           const todayStr = new Date().toISOString().slice(0, 10);
           let savedTimeline = { targetDays: 90, startDate: todayStr };
 
-          try {
-            const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${initialTrackId}`);
-            if (rawTimeline) {
-              const parsed = JSON.parse(rawTimeline);
-              if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
-              if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
-            }
-          } catch (err) {}
+          if (user) {
+            if (initialTrackData?.roadmapStartDate) savedTimeline.startDate = initialTrackData.roadmapStartDate;
+            if (initialTrackData?.targetDays) savedTimeline.targetDays = initialTrackData.targetDays;
+          } else {
+            try {
+              const rawTimeline = localStorage.getItem(`${LOCAL_PROGRESS_KEY}_timeline_${initialTrackId}`);
+              if (rawTimeline) {
+                const parsed = JSON.parse(rawTimeline);
+                if (parsed.targetDays) savedTimeline.targetDays = parsed.targetDays;
+                if (parsed.startDate) savedTimeline.startDate = parsed.startDate;
+              } else {
+                // Automatically persist default timeline to localStorage on guest's first visit
+                localStorage.setItem(
+                  `${LOCAL_PROGRESS_KEY}_timeline_${initialTrackId}`,
+                  JSON.stringify(savedTimeline)
+                );
+              }
+            } catch (err) {}
+          }
 
           const updatedSections = (Array.isArray(sectionsData) ? sectionsData : []).map((sec) => ({
             ...sec,
@@ -274,14 +320,33 @@ export default function Home() {
   }, [isSectionsLoading, activeSectionId]);
 
   // Apply timeline custom dates
-  const handleApplyRoadmapTimeline = (targetDays: number, startDate: string) => {
+  const handleApplyRoadmapTimeline = async (targetDays: number, startDate: string) => {
     if (!activeTrack) return;
-    try {
-      localStorage.setItem(
-        `${LOCAL_PROGRESS_KEY}_timeline_${activeTrack.id}`,
-        JSON.stringify({ startDate, targetDays })
-      );
-    } catch (e) {}
+
+    if (currentUser) {
+      // Authenticated user: persist timeline to database
+      try {
+        await apiClient('/api/tracks/user-timeline', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trackId: activeTrack.id,
+            startDate,
+            targetDays,
+          }),
+        });
+      } catch (e) {
+        console.error('Failed to save user timeline on server:', e);
+      }
+    } else {
+      // Guest user: save timeline in localStorage
+      try {
+        localStorage.setItem(
+          `${LOCAL_PROGRESS_KEY}_timeline_${activeTrack.id}`,
+          JSON.stringify({ startDate, targetDays })
+        );
+      } catch (e) {}
+    }
 
     const recalculatedSections = recalculateTrackTimeline(
       activeTrack.sections || [],
@@ -455,10 +520,9 @@ export default function Home() {
   };
 
   const handleAuthSuccess = (user: { id: string; username: string; role: string }) => {
+    clearGuestLocalStorage();
     setCurrentUser(user);
-    if (activeTrackId) {
-      fetchTrackSections(activeTrackId, user);
-    }
+    fetchInitialData();
   };
 
   const handleLogout = async () => {
@@ -470,10 +534,9 @@ export default function Home() {
     } finally {
       clearAuthToken();
       setCurrentUser(null);
+      clearGuestLocalStorage();
       showToast('Signed out. Continuing as guest.', 'info');
-      if (activeTrackId) {
-        await fetchTrackSections(activeTrackId, null);
-      }
+      await fetchInitialData();
       setIsLoggingOut(false);
     }
   };

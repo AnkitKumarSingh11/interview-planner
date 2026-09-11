@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Track, FilterStatus, FilterDifficulty } from '@/types/tracker';
 import { 
   Calendar, 
@@ -33,6 +33,11 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
     track.roadmapStartDate || new Date().toISOString().slice(0, 10)
   );
   const [showTimelinePicker, setShowTimelinePicker] = useState(false);
+
+  useEffect(() => {
+    if (track.targetDays) setTargetDays(track.targetDays);
+    if (track.roadmapStartDate) setStartDateStr(track.roadmapStartDate);
+  }, [track.id, track.targetDays, track.roadmapStartDate]);
 
   // Compute total and completed questions
   const allQuestions = (track.sections || []).flatMap((s) =>
